@@ -1,60 +1,72 @@
 import React, { useState, useEffect } from 'react';
 
 function App() {
-  const [issues, setIssues] = useState([]);
+  const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [repoName, setRepoName] = useState('expressjs/express');
-  const [currentRepo, setCurrentRepo] = useState('expressjs/express');
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [issues, setIssues] = useState([]);
 
   useEffect(() => {
-    const fetchIssues = async () => {
+    const fetchRepos = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://127.0.0.1:8000/issues?repo=${currentRepo}`);
+        const response = await fetch('http://127.0.0.1:8000/user/repos');
         const data = await response.json();
-        setIssues(data);
+        setRepos(data);
       } catch (error) {
-        console.error('Error fetching issues:', error);
+        console.error('Error fetching repos:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchIssues();
-  }, [currentRepo]);
+    fetchRepos();
+  }, []);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setCurrentRepo(repoName);
+  const handleRepoClick = async (repoName) => {
+    setSelectedRepo(repoName);
+    setIssues([]); // Clear previous issues
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/issues?repo=${repoName}`);
+      const data = await response.json();
+      setIssues(data);
+    } catch (error) {
+      console.error(`Error fetching issues for ${repoName}:`, error);
+    }
   };
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold underline mb-4">GitHub Issues for {currentRepo}</h1>
-      
-      <form onSubmit={handleSubmit} className="mb-4">
-        <input 
-          type="text" 
-          value={repoName} 
-          onChange={(e) => setRepoName(e.target.value)} 
-          placeholder="Enter repo name (e.g., expressjs/express)" 
-          className="border p-2 mr-2" 
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2">Fetch Issues</button>
-      </form>
-
+      <h1 className="text-3xl font-bold underline mb-4">Your Repositories</h1>
       {loading ? (
-        <p>Loading issues...</p>
+        <p>Loading repositories...</p>
       ) : (
         <ul>
-          {issues.map(issue => (
-            <li key={issue.number} className="border-b p-2">
-              <h2 className="text-xl font-semibold">{issue.title}</h2>
-              <p className="text-gray-600">Issue #{issue.number}</p>
-              <p className="text-gray-800 mt-2">{issue.body}</p>
+          {repos.map(repo => (
+            <li key={repo} className="border-b p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleRepoClick(repo)}>
+              <h2 className="text-xl font-semibold">{repo}</h2>
             </li>
           ))}
         </ul>
+      )}
+
+      {selectedRepo && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">Issues for {selectedRepo}</h2>
+          {issues.length > 0 ? (
+            <ul>
+              {issues.map(issue => (
+                <li key={issue.number} className="border-b p-2">
+                  <h3 className="text-xl font-semibold">{issue.title}</h3>
+                  <p className="text-gray-600">Issue #{issue.number}</p>
+                  <p className="text-gray-800 mt-2">{issue.body}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Loading issues for {selectedRepo}...</p>
+          )}
+        </div>
       )}
     </div>
   );

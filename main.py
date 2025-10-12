@@ -54,3 +54,13 @@ def get_issues(repo: str = "expressjs/express"):
 def create_issue(issue: NewIssue):
     # For now, just return the data that was sent
     return {"title": issue.title, "body": issue.body}
+
+@app.get("/user/repos")
+def get_user_repos():
+    g = Github(os.environ.get("GITHUB_TOKEN"))
+    user = g.get_user()
+    repos = user.get_repos()
+    repo_list = []
+    for repo in repos:
+        repo_list.append(repo.full_name)
+    return repo_list
