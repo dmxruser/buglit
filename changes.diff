@@ -1,0 +1,62 @@
+
+--- a/IMPORTANT_INTERNAL_APP.py
++++ b/IMPORTANT_INTERNAL_APP.py
+@@ -3,27 +3,33 @@
+ import tkinter as tk
+ from tkinter import ttk
+ 
++# --- Authentication Logic ---
++VALID_USERNAME = "testuser"
++VALID_PASSWORD = "testpassword" # In a real application, this would be hashed and stored securely
++
+ def get_credentials(username_field, password_field, output_label):
+     """
+     Retrieves the text from both the username and password fields and
+-    updates a display label with the retrieved information.
++    attempts to authenticate the user.
+     """
+     username = username_field.get()
+     password = password_field.get()
+ 
+     # Clear the fields after retrieval for security/next entry
+     username_field.delete(0, tk.END)
+     password_field.delete(0, tk.END)
++    username_field.focus() # Set focus back to username field for next attempt
+ 
+-    # Update the label in the GUI instead of just printing to the console
+-    output_label.config(
+-        text=f"Username Entered: '{username}'\nPassword Retrieved (Masked): '{password}'"
+-    )
+-    # Note: In a real application, you would handle authentication here.
++    # Perform authentication
++    if username == VALID_USERNAME and password == VALID_PASSWORD:
++        output_label.config(text="Login Successful!", foreground='green')
++        # In a real application, you would grant access, open new windows, etc.
++    else:
++        output_label.config(text="Invalid Username or Password.", foreground='red')
+ 
+ # --- GUI Setup ---
+ 
+ root = tk.Tk()
+ root.title("Transformative Enterprise Systems & Trust Information Systems")
+ root.geometry("700x700")
+ root.resizable(True, True)
+@@ -46,7 +52,7 @@
+ # 3. Output Label
+ ttk.Label(
+     main_frame,
+-    text="Credentials will appear here.",
++    text="Please enter your credentials to log in.", # More instructional initial text
+     foreground='#333333',
+     justify=tk.LEFT
+ )
+@@ -55,7 +61,7 @@
+ # 4. Button to trigger the function
+ # We use a lambda to pass the entry widgets and output label as arguments
+ login_button = ttk.Button(
+     main_frame,
+-    text="Submit Credentials",
++    text="Login", # Changed button text to be more intuitive for a login screen
+     command=lambda: get_credentials(username_entry, password_entry, output_display)
+ )
+ login_button.pack(pady=10)
