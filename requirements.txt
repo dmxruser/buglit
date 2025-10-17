@@ -2,3 +2,6 @@ fastapi
 uvicorn
 pygithub
 google-genai
+requests-oauthlib
+python-dotenv
+pyjwt

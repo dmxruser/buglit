@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 function App() {
+  const [token, setToken] = useState(null);
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState(null);
@@ -11,10 +12,31 @@ function App() {
   const [isThinking, setIsThinking] = useState(false);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl);
+      localStorage.setItem('github_token', tokenFromUrl);
+      window.history.replaceState({}, document.title, "/");
+    } else {
+      const tokenFromStorage = localStorage.getItem('github_token');
+      if (tokenFromStorage) {
+        setToken(tokenFromStorage);
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
     const fetchRepos = async () => {
+      if (!token) return;
       setLoading(true);
       try {
-        const response = await fetch('http://127.0.0.1:8000/user/repos');
+        const response = await fetch('http://127.0.0.1:8000/user/repos', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
         setRepos(data);
       } catch (error) {
@@ -25,13 +47,17 @@ function App() {
     };
 
     fetchRepos();
-  }, []);
+  }, [token]);
 
   const handleRepoClick = async (repoName) => {
     setSelectedRepo(repoName);
     setIssues([]); // Clear previous issues
     try {
-      const response = await fetch(`http://127.0.0.1:8000/issues?repo=${repoName}`);
+      const response = await fetch(`http://127.0.0.1:8000/issues?repo=${repoName}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
       setIssues(data);
     } catch (error) {
@@ -56,6 +82,7 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ command: aiTextBox, issue: selectedIssue }),
       });
@@ -70,6 +97,22 @@ function App() {
   };
 
   console.log('selectedIssue:', selectedIssue);
+
+  if (loading) {
+    return <div className="container mx-auto p-4 text-center">Loading...</div>;
+  }
+
+  if (!token) {
+    return (
+      <div className="container mx-auto p-4 text-center">
+        <h1 className="text-3xl font-bold mb-4">Welcome to Buglit</h1>
+        <p className="mb-4">Please log in with your GitHub account to continue.</p>
+        <a href="http://127.0.0.1:8000/login/github" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Login with GitHub
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4">
