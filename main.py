@@ -1,54 +1,82 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
-from github import Github, GithubException, Auth
-import requests
 import os
-import subprocess
-from pydantic import BaseModel
-from dotenv import load_dotenv
-import jwt
+import logging
 import time
+import jwt
+import requests
+import subprocess
+from pathlib import Path
+from fastapi import FastAPI, Depends, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
+import sys
+from pathlib import Path
+from github import Github, Auth, GithubException
 from google import genai
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
+
+from config import settings
+from api.v1.api import api_router
+from services.github_service import GitHubService
+from models.schemas import NewIssue, Command
 from git_helper import GitHelper
 
-# Load environment variables
-load_dotenv()
-
-# GitHub App credentials
-GITHUB_APP_ID = os.getenv("GITHUB_APP_ID")
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-
-# Load private key
-try:
-    with open("buglit.2025-10-15.private-key.pem", "r") as key_file:
-        GITHUB_PRIVATE_KEY = key_file.read()
-    
-    if not GITHUB_PRIVATE_KEY.startswith('-----BEGIN RSA PRIVATE KEY-----'):
-        raise ValueError("Invalid private key format")
-except FileNotFoundError:
-    raise RuntimeError("Private key file not found")
-except ValueError as e:
-    raise RuntimeError(f"Private key error: {e}")
-
-# Initialize Gemini API - reads GEMINI_API_KEY from environment automatically
+# Configure Gemini
+# type: ignore
 client = genai.Client()
 
-app = FastAPI()
 
-# Pydantic models
-class NewIssue(BaseModel):
-    title: str
-    body: str
-    number: int
-    repo_full_name: str
+# Configure logging
+logging.config.dictConfig({  # type: ignore
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO" if not settings.DEBUG else "DEBUG",
+    },
+})
 
-class Command(BaseModel):
-    command: str
-    issue: NewIssue
+logger = logging.getLogger(__name__)
 
-# CORS configuration
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Starting BugLit application")
+    
+    # Ensure temp directory exists
+    settings.TEMP_DIR.mkdir(exist_ok=True, parents=True)
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down BugLit application")
+
+app = FastAPI(
+    title="BugLit API",
+    description="API for BugLit - AI-powered bug fixing tool",
+    version="0.1.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan
+)
+
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -62,18 +90,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+# Mount API routes
+app.include_router(api_router, prefix="/api/v1")
+
+# Mount static files (for frontend)
+frontend_dir = Path(__file__).parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 # Helper functions
 def create_jwt() -> str:
     """Create a JWT token for GitHub App authentication."""
-    if not GITHUB_APP_ID:
+    if not settings.GITHUB_APP_ID:
         raise HTTPException(status_code=500, detail="GITHUB_APP_ID is not configured")
     
     payload = {
         'iat': int(time.time()),
         'exp': int(time.time()) + 600,
-        'iss': int(GITHUB_APP_ID)
+        'iss': int(settings.GITHUB_APP_ID)
     }
-    return jwt.encode(payload, GITHUB_PRIVATE_KEY, algorithm='RS256')
+    
+    try:
+        # Use the private key bytes directly for JWT encoding
+        return jwt.encode(payload, settings.private_key_bytes, algorithm='RS256')
+        
+    except Exception as e:
+        logger.error(f"Error creating JWT: {str(e)}")
+        if hasattr(settings, 'private_key_bytes'):
+            logger.error(f"Key type: {type(settings.private_key_bytes).__name__}")
+            logger.error(f"Key length: {len(settings.private_key_bytes) if hasattr(settings.private_key_bytes, '__len__') else 'N/A'}")
+        raise HTTPException(status_code=500, detail="Failed to create authentication token")
 
 def get_installation_access_token(installation_id: int) -> str:
     """Get an access token for a specific installation."""
@@ -139,7 +199,7 @@ def get_app_installations() -> list:
         
         return response.json()
     except Exception as e:
-        print(f"Error fetching app installations: {e}")
+        logger.error(f"Error fetching app installations: {e}")
         return []
 
 def get_installation_repositories(installation_id: int) -> list:
@@ -177,7 +237,7 @@ def get_installation_repositories(installation_id: int) -> list:
         
         return response.json().get('repositories', [])
     except Exception as e:
-        print(f"Error fetching repositories: {e}")
+        logger.error(f"Error fetching repositories: {e}")
         return []
 
 # Routes
@@ -188,15 +248,15 @@ def read_root():
 @app.get("/login/github")
 def login_github():
     return RedirectResponse(
-        f"https://github.com/login/oauth/authorize?client_id={GITHUB_CLIENT_ID}"
+        f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}"
     )
 
 @app.get("/auth/github/callback")
 def auth_github_callback(code: str):
     """Handle GitHub OAuth callback."""
     params = {
-        "client_id": GITHUB_CLIENT_ID,
-        "client_secret": GITHUB_CLIENT_SECRET,
+        "client_id": settings.GITHUB_CLIENT_ID,
+        "client_secret": settings.GITHUB_CLIENT_SECRET,
         "code": code
     }
     headers = {"Accept": "application/json"}
@@ -262,6 +322,9 @@ async def get_user_repos():
 @app.post("/run-command")
 def run_command(command: Command):
     """Run a command to fix an issue."""
+    if not client:
+        raise HTTPException(status_code=500, detail="Gemini API is not configured")
+    
     try:
         # Get installation and access token
         g = get_github_app_installation(command.issue.repo_full_name)
@@ -300,7 +363,7 @@ def run_command(command: Command):
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         file_contents += f"--- {relative_path} ---\n{f.read()}\n"
                 except Exception as e:
-                    print(f"Warning: Could not read {file_path}: {e}")
+                    logger.warning(f"Could not read {file_path}: {e}")
         
         # Generate fix using Gemini
         prompt = (
@@ -319,9 +382,14 @@ def run_command(command: Command):
         response_text = response.text
         
         # Parse response
-        if response_text is not None:
-            lines = response_text.split("\n")
-
+        if response_text is None:
+            raise HTTPException(status_code=500, detail="No response from Gemini")
+        
+        lines = response_text.split("\n")
+        
+        if len(lines) < 3:
+            raise HTTPException(status_code=500, detail="Invalid response format from Gemini")
+        
         file_name = lines[0].strip()
         file_content = "\n".join(lines[2:-1])
         
@@ -338,8 +406,8 @@ def run_command(command: Command):
         return {"message": "Changes applied and committed successfully", "status": "completed"}
     
     except subprocess.CalledProcessError as e:
-        print(f"Git error: {e}")
+        logger.error(f"Git error: {e}")
         raise HTTPException(status_code=400, detail=f"Git error: {e}")
     except Exception as e:
-        print(f"Error in run_command: {e}")
+        logger.error(f"Error in run_command: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,15 @@
+import base64
+key_b64 = "MIIEowIBAAKCAQEArgjs0lag7ugb2pUQIDaOF70WfU5Dr/4Uawbc0ocoX5RGh9zScbJOVr6M+NBguW2povktx8woGf3wwap8WyYy8Y7fO/43HF8E9mkwPtlOxEfY9A743ti1OA4nLt8W7sbn6HCM6m5XTYrnA0yjxTR3O68W5kOcNaSnvlk9/d1Tr5LAg5IhlTSQCxdPKbRvjkZnj9AyM71NStGWx3tL5Q3/zwuL1RY8ZJ0jUnWtXlZIqGsQHvsoM0ar4z7AhOqzcogghW82CoynCm7IF+zO3pWYhdvX9IvsMeQTsRadr0YPWK81toEiJS++FiJsxF1X2IrcljPHokNR6hTT943hslb4/QIDAQABAoIBAD4eMWliQk8Dye1bB0Z4Mn+GnmBbbw2CQwdwi6EZXO/AnOwhhXvPiOatXOPyfJOy8Lma9xw5YpbkbOqzT2+5UrWlqUhglIsr3zmUkgPczKCChI2YSnxAHW7Enne8aRMRK/VrNuD2QXMMASjMUigxcd17wVCvETKUcsseT2ItfZFM2U/ngf8uj3QxUFviJEG9sIQVp2uHVlAaDhn5aRYS8M00SFr5IpL9Vd8zXkrKopI3rjwGQvSWJULzQL/2ZG+E016h34immbhisWaYGouwIUUpg54B1M6x0oHneaKBlXLMiY+5Bh6/2v1Y7dlOdO4aEBu3ta2W7Nzvuw5bvfwBoECgYEA3WrQ7PVgHfHT1H2kZLfFYpCTcH3iaB21tioLruGezdEgVDFNDTk9zRKrLPCj2lUfnF7Wx3RAnQSfuIaBFsaT1m4q/tfN5jrnA4vH3B+00kbZ8xORE7YtdRIy4LkqOpP51QHsD2OW+IUuKje44AvXDUBNv8vIkqLIOeB1Q/wv2RcCgYEAyTeQVMUe4RVnJnp7NB6f/OxCO+tGY1gBSA54VcCWsXcIv7PhBmm1vZj+Al/w+LDcyEjZGE9iOriH4I9+k4BtbcYi91iACl1nF3HGYV50a09ZWWozX52DYfuH5cfLfkUKvatKXctplSlqdTBwzKBggVFxa5XPS5p6oL6T8N7JowsCgYEAyNQgyjzJwH9epmaLnHr/AqalxKu5lrwT3DWIwUeNlZrwWs0Y2TypLH+ZWTqvM9JvyJJQ9zoffQv7nxAIuFLHNwBX6SxuajvU22eGkMcFaJCxEQQXW6yq0HwAP8pTXixnt2d16INpJOMPe2VtP3IdzbwciTFaLH6PY8eONWrhL2MCgYAb0E1oGlNZY579h6KuIqmUyYeiRrRVGR4cOrvRhqyN3VldPl0ViNkxWwuJgn+JsNDj8oXnwVlfqpBFrzAc7Xyy1teQfzA7vot4hyaX4PmQt8gu/uoZBmnZym4Pih2L17lTXHEMJAj1MGNhzY9aCbUtSve1mmCsH69httY2TmVq3wKBgC+nM8HCgTupHKXbkXdWPZtBHFlECV/tffRjtcX1jKi+uDVvDYYKtSDrL5+wGGYXwyjuprySRhyUZVXnT907jKpnHIeBYl1Dk4p/mIHc/8Sm//AgIOScMBdmeDpccz1LW3eAOmZeSwBPItH2c36duj2nF59dGkPPYLlmCLSiNhIv"
+try:
+    key_b64_no_newlines = "".join(key_b64.splitlines())
+    print(f"length: {len(key_b64_no_newlines)}")
+    
+    # Add padding
+    padding = "=" * ((4 - len(key_b64_no_newlines) % 4) % 4)
+    key_b64_no_newlines += padding
+
+    print(f"length after padding: {len(key_b64_no_newlines)}")
+    base64.b64decode(key_b64_no_newlines)
+    print("decoding successful")
+except Exception as e:
+    print(f"decoding failed: {e}")

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Button } from '@patternfly/react-core';
+import { MdFavorite } from 'react-icons/md';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -78,7 +80,7 @@ function App() {
     setIsThinking(true);
     setPyOutput('');
     try {
-      const response = await fetch('http://127.0.0.1:8000/run-command', {
+      const response = await fetch('http://1227.0.0.1:8000/run-command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -107,6 +109,7 @@ function App() {
       <div className="container mx-auto p-4 text-center">
         <h1 className="text-3xl font-bold mb-4">Welcome to Buglit</h1>
         <p className="mb-4">Please log in with your GitHub account to continue.</p>
+        <Button variant="primary">Hello PatternFly!</Button> <MdFavorite />
         <a href="http://127.0.0.1:8000/login/github" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           Login with GitHub
         </a>
