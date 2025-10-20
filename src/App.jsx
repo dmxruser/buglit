@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@patternfly/react-core';
-import { MdFavorite } from 'react-icons/md';
+import {
+  Button,
+  Page,
+  PageSection,
+  Title,
+  Spinner,
+  Bullseye,
+  EmptyState,
+  EmptyStateBody,
+  DataList,
+  DataListItem,
+  DataListItemRow,
+  DataListCell,
+  Content,
+  Card,
+  CardBody,
+  CardTitle,
+  TextInput,
+  CodeBlock,
+  Gallery,
+} from '@patternfly/react-core';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -80,7 +99,7 @@ function App() {
     setIsThinking(true);
     setPyOutput('');
     try {
-      const response = await fetch('http://1227.0.0.1:8000/run-command', {
+      const response = await fetch('http://12-7.0.0.1:8000/run-command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,90 +117,115 @@ function App() {
     }
   };
 
-  console.log('selectedIssue:', selectedIssue);
-
   if (loading) {
-    return <div className="container mx-auto p-4 text-center">Loading...</div>;
+    return (
+      <Bullseye>
+        <Spinner />
+      </Bullseye>
+    );
   }
 
   if (!token) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-3xl font-bold mb-4">Welcome to Buglit</h1>
-        <p className="mb-4">Please log in with your GitHub account to continue.</p>
-        <Button variant="primary">Hello PatternFly!</Button> <MdFavorite />
-        <a href="http://127.0.0.1:8000/login/github" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Login with GitHub
-        </a>
-      </div>
+      <Page>
+        <PageSection hasBodyWrapper={false} >
+          <EmptyState titleText={<Title headingLevel="h1">Welcome to Buglit</Title>}>
+            <EmptyStateBody>
+              Please log in with your GitHub account to continue.
+            </EmptyStateBody>
+            <Button component="a" href="http://127.0.0.1:8000/login/github" variant="primary">
+              Login with GitHub
+            </Button>
+          </EmptyState>
+        </PageSection>
+      </Page>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold underline mb-4">Your Repositories</h1>
-      {loading ? (
-        <p>Loading repositories...</p>
-      ) : (
-        <ul>
-          {repos.map(repo => (
-            <li key={repo} className="border-b p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleRepoClick(repo)}>
-              <h2 className="text-xl font-semibold">{repo}</h2>
-            </li>
-          ))}
-        </ul>
-      )}
+    <Page>
+      <PageSection hasBodyWrapper={false} >
+        <Title headingLevel="h1">Your Repositories</Title>
+      </PageSection>
+
+      <PageSection hasBodyWrapper={false}>
+        {loading ? (
+          <Spinner />
+        ) : (
+          <Gallery hasGutter>
+            {repos.map(repo => (
+              <Card key={repo} onClick={() => handleRepoClick(repo)} isClickable isSelectable className="repo-card">
+                <CardTitle>{repo}</CardTitle>
+              </Card>
+            ))}
+          </Gallery>
+        )}
+      </PageSection>
 
       {selectedRepo && !selectedIssue && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Issues for {selectedRepo}</h2>
+        <PageSection hasBodyWrapper={false}>
+          <Title headingLevel="h2">Issues for {selectedRepo}</Title>
           {issues.length > 0 ? (
-            <ul>
+            <DataList aria-label="Issues list">
               {issues.map(issue => (
-                <li key={issue.number} className="border-b p-2 cursor-pointer hover:bg-gray-100" onClick={() => handleIssueClick(issue)}>
-                  <h3 className="text-xl font-semibold">{issue.title}</h3>
-                  <p className="text-gray-600">Issue #{issue.number}</p>
-                </li>
+                <DataListItem key={issue.number} className="issue-list-item"  aria-labelledby={`issue-${issue.number}`} onClick={() => handleIssueClick(issue)} isSelectable>
+                  <DataListItemRow>
+                    <DataListCell>
+                      <Content>
+                        <Content component="h3">{issue.title}</Content>
+                        <Content component="p">Issue #{issue.number}</Content>
+                      </Content>
+                    </DataListCell>
+                  </DataListItemRow>
+                </DataListItem>
               ))}
-            </ul>
+            </DataList>
           ) : (
             <p>Loading issues for {selectedRepo}...</p>
           )}
-        </div>
+        </PageSection>
       )}
 
       {selectedIssue && (
-        <div className="mt-8">
-          <button onClick={handleBackToIssues} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4">
+        <PageSection hasBodyWrapper={false}>
+          <Button onClick={handleBackToIssues} variant="primary" style={{ marginBottom: '1rem' }}>
             Back to Issues
-          </button>
-          <h2 className="text-2xl font-bold mb-4">Issue Details</h2>
-          <h3 className="text-xl font-semibold">{selectedIssue.title}</h3>
-          <p className="text-gray-600">Issue #{selectedIssue.number}</p>
-          <p className="text-gray-800 mt-2">{selectedIssue.body}</p>
+          </Button>
+          <Card>
+            <CardTitle>
+              <Title headingLevel="h2">{selectedIssue.title}</Title>
+            </CardTitle>
+            <CardBody>
+              <Content>
+                <Content component="p">Issue #{selectedIssue.number}</Content>
+                <Content component="p">{selectedIssue.body}</Content>
+              </Content>
 
-          <div className="mt-4">
-            <input 
-              type="text" 
-              value={aiTextBox}
-              onChange={(e) => setAiTextBox(e.target.value)}
-              className="border p-2 w-full mb-2"
-              placeholder="Send a command to py..."
-            />
-            <button onClick={handlePyAction} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-              Send to Py
-            </button>
-            <div className="border p-2 w-full mt-2 bg-gray-100 rounded">
-              {isThinking ? (
-                <p>Thinking...</p>
-              ) : (
-                <pre className="whitespace-pre-wrap">{pyOutput}</pre>
-              )}
-            </div>
-          </div>
-        </div>
+              <div style={{ marginTop: '1rem' }}>
+                <TextInput
+                  value={aiTextBox}
+                  onChange={(_event, value) => setAiTextBox(value)}
+                  aria-label="AI command input"
+                  placeholder="Send a command to py..."
+                />
+                <Button onClick={handlePyAction} variant="primary" style={{ marginTop: '1rem' }}>
+                  Send to Py
+                </Button>
+                <div style={{ marginTop: '1rem' }}>
+                  {isThinking ? (
+                    <Spinner />
+                  ) : (
+                    <CodeBlock>
+                      <pre>{pyOutput}</pre>
+                    </CodeBlock>
+                  )}
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </PageSection>
       )}
-    </div>
+    </Page>
   );
 }
 

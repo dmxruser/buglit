@@ -1,1 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap');
 @import "tailwindcss";
+
+:root {
+  --pf-t--global--font--family--text: "Montserrat", sans-serif;
+  --pf-t--global--font--family--heading: "Montserrat", sans-serif;
+  --pf-t--global--font--family--monospace: "Montserrat", sans-serif;
+}
+
+.repo-card:hover {
+  background-color: #f0f0f0;
+}
+
+.issue-list-item:hover {
+  background-color: #f0f0f0;
+}
