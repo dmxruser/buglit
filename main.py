@@ -26,7 +26,11 @@ from models.schemas import NewIssue, Command
 from git_helper import GitHelper
 
 # Configure Gemini
-# type: ignore
+if "GEMINI_API_KEY" in os.environ:
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+else:
+    raise RuntimeError("GEMINI_API_KEY environment variable not set.")
+
 client = genai.Client()
 
 
@@ -36,7 +40,7 @@ logging.config.dictConfig({  # type: ignore
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "format": "% (asctime)s - %(name)s - %(levelname)s - %(message)s",
         },
     },
     "handlers": {
@@ -75,6 +79,8 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     lifespan=lifespan
 )
+
+app.state.gemini_client = client
 
 # CORS middleware
 app.add_middleware(
@@ -376,7 +382,7 @@ def run_command(command: Command):
         )
         
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt
         )
         response_text = response.text
