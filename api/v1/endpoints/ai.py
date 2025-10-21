@@ -1,17 +1,14 @@
-from fastapi import APIRouter, Body, Depends, Request
+from fastapi import APIRouter, Body, HTTPException, status
 from typing import List
 from google import genai
+import os
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-def get_gemini_client(request: Request) -> genai.Client:
-    return request.app.state.gemini_client
+client = genai.Client()
 
 @router.post("/sort-issues", response_model=List[str])
-async def sort_issues(
-    issue_titles: List[str] = Body(..., embed=True),
-    client: genai.Client = Depends(get_gemini_client)
-):
+async def sort_issues(issue_titles: List[str] = Body(..., embed=True)):
     """
     Sorts issues by importance using the Gemini API.
     """
@@ -23,7 +20,7 @@ async def sort_issues(
         )
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
