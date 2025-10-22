@@ -12,6 +12,11 @@ class GitHubServiceError(Exception):
     """Base exception for GitHub service errors"""
     pass
 
+async def get_github_service() -> 'GitHubService':
+    """Factory function to create and return a GitHubService instance"""
+    service = GitHubService()
+    return await service.__aenter__()
+
 class GitHubService:
     BASE_URL = "https://api.github.com"
     REDIS_PREFIX = "github:token"
@@ -208,3 +213,12 @@ class GitHubService:
             raise GitHubServiceError(
                 f"Failed to close issue: {response.text}"
             )
+            
+    async def get_user_repos(self) -> List[Repository]:
+        """Get repositories for the authenticated user"""
+        installations = await self.get_installations()
+        if not installations:
+            raise GitHubServiceError("No GitHub App installations found")
+            
+        # Get repos from all installations
+        return await self.get_all_repos()

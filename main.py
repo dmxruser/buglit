@@ -26,10 +26,6 @@ from models.schemas import NewIssue, Command
 from git_helper import GitHelper
 
 # Configure Gemini
-if "GEMINI_API_KEY" in os.environ:
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-else:
-    raise RuntimeError("GEMINI_API_KEY environment variable not set.")
 
 client = genai.Client()
 
@@ -40,7 +36,7 @@ logging.config.dictConfig({  # type: ignore
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "format": "% (asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         },
     },
     "handlers": {
@@ -356,8 +352,9 @@ def run_command(command: Command):
         )
         git_helper.clone_repo()
         
-        # Read all files
+        # Read all files and get relative paths
         file_contents = ""
+        relative_paths = []
         for root, _, files in os.walk(git_helper.clone_path):
             if ".git" in root:
                 continue
@@ -366,6 +363,7 @@ def run_command(command: Command):
                 file_path = os.path.join(root, name)
                 try:
                     relative_path = os.path.relpath(file_path, git_helper.clone_path)
+                    relative_paths.append(relative_path)
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         file_contents += f"--- {relative_path} ---\n{f.read()}\n"
                 except Exception as e:
@@ -376,13 +374,16 @@ def run_command(command: Command):
             f"Fix the issue: {command.command}\n"
             f"Issue #{command.issue.number}: {command.issue.title}\n"
             f"Description: {command.issue.body}\n\n"
+            f"Here is a list of files in the repository:\n"
+            f"{'\\n'.join(relative_paths)}\n\n"
             f"File contents:\n{file_contents}\n\n"
+            f"IMPORTANT: You MUST use one of the exact file paths from the list above in your response.\n"
             f"Return the full content of the modified file in this format:\n"
-            f"<file_name>\n```<language>\n<file_content>\n```"
+            f"<file_path>\n```<language>\n<file_content>\n```"
         )
         
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=prompt
         )
         response_text = response.text
@@ -397,6 +398,14 @@ def run_command(command: Command):
             raise HTTPException(status_code=500, detail="Invalid response format from Gemini")
         
         file_name = lines[0].strip()
+        
+        # Validate that the file_name is in the list of relative paths
+        if file_name not in relative_paths:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file path provided by AI: {file_name}. Must be one of {', '.join(relative_paths)}"
+            )
+            
         file_content = "\n".join(lines[2:-1])
         
         # Write changes

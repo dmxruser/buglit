@@ -73,6 +73,31 @@ function App() {
     fetchRepos();
   }, [token]);
 
+  const sortIssues = async (issues) => {
+    try {
+      const issueTitles = issues.map(issue => issue.title);
+      const response = await fetch('http://127.0.0.1:8000/api/v1/ai/sort-issues', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ issue_titles: issueTitles })
+      });
+      const sortedTitles = await response.json();
+      const sortedIssues = issues.slice().sort((a, b) => {
+        const aIndex = sortedTitles.indexOf(a.title);
+        const bIndex = sortedTitles.indexOf(b.title);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+      setIssues(sortedIssues);
+    } catch (error) {
+      console.error('Error sorting issues:', error);
+    }
+  };
+
   const handleRepoClick = async (repoName) => {
     setSelectedRepo(repoName);
     setSelectedIssue(null); // Deselect issue when changing repo
@@ -85,6 +110,9 @@ function App() {
       });
       const data = await response.json();
       setIssues(data);
+      if (data.length > 0) {
+        await sortIssues(data);
+      }
     } catch (error) {
       console.error(`Error fetching issues for ${repoName}:`, error);
     }
@@ -103,7 +131,7 @@ function App() {
     setIsThinking(true);
     setPyOutput('');
     try {
-      const response = await fetch('http://12-7.0.0.1:8000/run-command', {
+      const response = await fetch('http://127.0.0.1:8000/run-command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +173,7 @@ function App() {
   }
 
   const sidebar = (
-    <PageSidebar>
+    <PageSidebar className="app-sidebar">
       <Nav>
         <NavList>
           <Title headingLevel="h2">Repositories</Title>
@@ -214,7 +242,7 @@ function App() {
                   placeholder="Send a command to py..."
                 />
                 <Button onClick={handlePyAction} variant="primary" style={{ marginTop: '1rem' }}>
-                  Send to Py
+                  Do that
                 </Button>
                 <div style={{ marginTop: '1rem' }}>
                   {isThinking ? (

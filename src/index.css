@@ -5,6 +5,11 @@
   --pf-t--global--font--family--text: "Montserrat", sans-serif;
   --pf-t--global--font--family--heading: "Montserrat", sans-serif;
   --pf-t--global--font--family--monospace: "Montserrat", sans-serif;
+  --pf-v6-c-button--BorderRadius: 0;
+  --pf-v6-c-card--BorderRadius: 0;
+  --pf-v6-c-data-list__item--BorderRadius: 0;
+  --pf-v6-c-nav__link--BorderRadius: 0;
+  --pf-v6-c-text-input--BorderRadius: 0;
 }
 
 .repo-card:hover {
@@ -14,3 +19,13 @@
 .issue-list-item:hover {
   background-color: #f0f0f0;
 }
+
+.app-sidebar {
+  background-color: #f0f0f0;
+}
+
+.sidebar {
+  background-color: #fafafa;
+  max-height: 80vh;
+  overflow-y: auto;
+} 
