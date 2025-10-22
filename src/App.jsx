@@ -173,9 +173,9 @@ function App() {
   }
 
   const sidebar = (
-    <PageSidebar className="app-sidebar">
+      <PageSidebar>
       <Nav>
-        <NavList>
+        <NavList className='sidebar'>
           <Title headingLevel="h2">Repositories</Title>
           {repos.map((repo, index) => (
             <NavItem key={index} isActive={selectedRepo === repo} onClick={() => handleRepoClick(repo)}>
