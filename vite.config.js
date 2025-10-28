@@ -10,4 +10,7 @@ export default defineConfig({
       ignored: ["**/.venv/**"],
     },
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+  },
 });

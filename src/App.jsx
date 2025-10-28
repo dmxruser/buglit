@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MdArrowBack } from 'react-icons/md';
 import {
   Button,
   Page,
@@ -49,6 +50,7 @@ function App() {
   };
 
   const onSelect = (event, selection) => {
+    console.log('Selected repo:', selection);  // Debug log
     handleRepoSelect(selection);
     setIsOpen(false);
   };
@@ -80,8 +82,11 @@ function App() {
           }
         });
         const data = await response.json();
-        console.log('Fetched repos:', data);
-        setRepos(data);
+        console.log('Raw repos data:', data);
+        // Make sure repos are in the correct format
+        const formattedRepos = Array.isArray(data) ? data : [];
+        console.log('Formatted repos:', formattedRepos);
+        setRepos(formattedRepos);
       } catch (error) {
         console.error('Error fetching repos:', error);
       } finally {
@@ -91,7 +96,7 @@ function App() {
 
     fetchRepos();
   }, [token]);
-
+  
   const categorizeIssues = async (issues) => {
     try {
       const issueTitles = issues.map(issue => issue.title);
@@ -110,7 +115,6 @@ function App() {
         Minor: categorized.Minor.map(title => issues.find(i => i.title === title)).filter(Boolean),
         Bug: categorized.Bug.map(title => issues.find(i => i.title === title)).filter(Boolean),
       };
-      console.log('Categorized issues:', categorizedWithFullIssues);
       setCategorizedIssues(categorizedWithFullIssues);
     } catch (error) {
       console.error('Error categorizing issues:', error);
@@ -118,18 +122,24 @@ function App() {
   };
 
   const handleRepoSelect = async (repoName) => {
+    console.log('handleRepoSelect called with:', repoName);  // Debug log
+    if (!repoName) {
+      console.error('No repo name provided to handleRepoSelect');
+      return;
+    }
     setSelectedRepo(repoName);
     setSelectedIssue(null);
     setIssues([]);
     setCategorizedIssues({ Major: [], Minor: [], Bug: [] });
-    setSelectedCategory(null); // Reset selected category when a new repo is selected
     try {
+      console.log(`Fetching issues for repo: ${repoName}`);  // Debug log
       const response = await fetch(`http://127.0.0.1:8000/issues?repo=${repoName}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
+      console.log('Fetched issues:', data);  // Debug log
       setIssues(data);
       if (data.length > 0) {
         await categorizeIssues(data);
@@ -140,12 +150,16 @@ function App() {
   };
 
   const handleIssueClick = (issue) => {
-    console.log('Issue clicked:', issue);
     setSelectedIssue(issue);
   };
 
   const handleBackToIssues = () => {
     setSelectedIssue(null);
+    setSelectedCategory(null);
+  };
+  
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
   };
 
   const handlePyAction = async () => {
@@ -190,27 +204,7 @@ function App() {
     <Toolbar>
       <ToolbarContent>
         <ToolbarItem>
-          <Select
-            variant="single"
-            onSelect={onSelect}
-            selections={selectedRepo}
-            isOpen={isOpen}
-            toggle={(toggleRef) => (
-              <MenuToggle
-                ref={toggleRef}
-                onClick={() => onToggle(!isOpen)}
-                isExpanded={isOpen}
-              >
-                {selectedRepo || 'Select a Repository'}
-              </MenuToggle>
-            )}
-          >
-            {repos.map((repo) => (
-              <SelectOption key={repo} value={repo}>
-                {repo}
-              </SelectOption>
-            ))}
-          </Select>
+          
         </ToolbarItem>
       </ToolbarContent>
     </Toolbar>
@@ -252,48 +246,69 @@ function App() {
     <Page header={header}>
       {!selectedRepo && (
         <PageSection>
-          <EmptyState>
-            <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-              <option>Select a repository</option>
-            </select>
-          </EmptyState>
-        </PageSection>
-      )}
-
-      {selectedRepo && !selectedCategory && !selectedIssue && (
-        <PageSection>
-          <Title headingLevel="h2">Issue Categories</Title>
-          <DataList aria-label="Issue categories">
-            {Object.entries(categorizedIssues).map(([category, issues]) => (
-              <DataListItem
-                key={category}
-                isSelectable
-                onClick={() => setSelectedCategory(category)}
-              >
-                <DataListItemRow>
-                  <DataListCell>
-                    <Content>
-                      <Content component="h3">{category}</Content>
-                      <Content component="p">{issues.length} issues</Content>
-                    </Content>
-                  </DataListCell>
-                </DataListItemRow>
-              </DataListItem>
+          <Select
+            variant="single"
+            onToggle={(_event, isOpen) => setIsOpen(isOpen)}
+            onSelect={onSelect}
+            selections={selectedRepo}
+            isOpen={isOpen}
+            toggle={(toggleRef) => (
+              <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+                {selectedRepo || "Select a Repository"}
+              </MenuToggle>
+            )}
+          >
+            {repos.map((repo) => (
+              <SelectOption key={repo} value={repo}>
+                {repo}
+              </SelectOption>
             ))}
-          </DataList>
+          </Select>
         </PageSection>
       )}
 
-      {selectedRepo && selectedCategory && !selectedIssue && (
-        <PageSection>
-          <Button onClick={() => setSelectedCategory(null)} variant="primary" style={{ marginBottom: '1rem' }}>
-            Back to Categories
-          </Button>
-          {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
-        </PageSection>
+      {selectedRepo && !selectedIssue && (
+        <>
+          {!selectedCategory ? (
+            <PageSection>
+              <Title headingLevel="h2">Categories</Title>
+              <DataList aria-label="Issue categories">
+                {Object.entries(categorizedIssues).map(([category, issues]) => (
+                  <DataListItem
+                    key={category}
+                    isSelectable
+                    onClick={() => handleCategorySelect(category)}
+                  >
+                    <DataListItemRow>
+                      <DataListCell>
+                        <Content>
+                          <Content component="h3">{category}</Content>
+                          <Content component="p">{issues.length} issues</Content>
+                        </Content>
+                      </DataListCell>
+                    </DataListItemRow>
+                  </DataListItem>
+                ))}
+              </DataList>
+            </PageSection>
+          ) : (
+            <PageSection>
+              <Button
+                variant="link"
+                icon={<MdArrowBack />}
+                onClick={() => setSelectedCategory(null)}
+                style={{ marginBottom: '1rem' }}
+                iconPosition="left"
+              >
+                Back to Categories
+              </Button>
+              {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
+            </PageSection>
+          )}
+        </>
       )}
 
-      {selectedRepo && selectedIssue && (
+      {selectedIssue && (
         <PageSection>
           <Button onClick={handleBackToIssues} variant="primary" style={{ marginBottom: '1rem' }}>
             Back to Issues
@@ -330,3 +345,4 @@ function App() {
 }
 
 export default App;
+// Added a comment to force re-evaluation

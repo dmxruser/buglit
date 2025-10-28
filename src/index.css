@@ -19,13 +19,3 @@
 .issue-list-item:hover {
   background-color: #f0f0f0;
 }
-
-.app-sidebar {
-  background-color: #f0f0f0;
-}
-
-.sidebar {
-  background-color: #fafafa;
-  max-height: 80vh;
-  overflow-y: auto;
-} 
