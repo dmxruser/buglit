@@ -321,6 +321,7 @@ async def get_user_repos():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+import json
 @app.post("/run-command")
 def run_command(command: Command):
     """Run a command to fix an issue."""
@@ -371,19 +372,39 @@ def run_command(command: Command):
         
         # Generate fix using Gemini
         prompt = (
-            f"Fix the issue: {command.command}\n"
+            f"You are an AI software engineer. Your task is to fix the following issue.\n"
+            f"Issue: {command.command}\n"
             f"Issue #{command.issue.number}: {command.issue.title}\n"
             f"Description: {command.issue.body}\n\n"
             f"Here is a list of files in the repository:\n"
             f"{'\\n'.join(relative_paths)}\n\n"
             f"File contents:\n{file_contents}\n\n"
-            f"IMPORTANT: You MUST use one of the exact file paths from the list above in your response.\n"
-            f"Return the full content of the modified file in this format:\n"
-            f"<file_path>\n```<language>\n<file_content>\n```"
+            f"Please provide a plan to fix the issue. The plan should be a sequence of actions.\n"
+            f"The available actions are:\n"
+            f"- `REPLACE`: replace a block of text in a file.\n"
+            f"- `RUN`: run a shell command.\n"
+            f"- `WRITE`: write content to a new file.\n"
+            f"\n"
+            f"You must respond with a JSON array of actions. Each action is an object with 'action', 'file_path' (for REPLACE/WRITE), 'old_string', 'new_string' (for REPLACE), 'content' (for WRITE), and 'command' (for RUN).\n"
+            f"For the 'REPLACE' action, 'old_string' must be an exact match of the content to be replaced, including indentation.\n"
+            f"Example response:\n"
+            f"[\n"
+            f"  {{\n"
+            f"    \"action\": \"REPLACE\",\n"
+            f"    \"file_path\": \"src/main.py\",\n"
+            f"    \"old_string\": \"    return a + b\",\n"
+            f"    \"new_string\": \"    return a - b\"\n"
+            f"  }},\n"
+            f"  {{\n"
+            f"    \"action\": \"RUN\",\n"
+            f"    \"command\": \"pytest\"\n"
+            f"  }}\n"
+            f"]\n"
+            f"Now, provide the plan to fix the issue."
         )
         
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt
         )
         response_text = response.text
@@ -392,26 +413,82 @@ def run_command(command: Command):
         if response_text is None:
             raise HTTPException(status_code=500, detail="No response from Gemini")
         
-        lines = response_text.split("\n")
-        
-        if len(lines) < 3:
-            raise HTTPException(status_code=500, detail="Invalid response format from Gemini")
-        
-        file_name = lines[0].strip()
-        
-        # Validate that the file_name is in the list of relative paths
-        if file_name not in relative_paths:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file path provided by AI: {file_name}. Must be one of {', '.join(relative_paths)}"
-            )
+        try:
+            # Clean the response to extract only the JSON part
+            json_response_text = response_text.strip()
+            if json_response_text.startswith("```json"):
+                json_response_text = json_response_text[7:]
+            if json_response_text.endswith("```"):
+                json_response_text = json_response_text[:-3]
             
-        file_content = "\n".join(lines[2:-1])
-        
-        # Write changes
-        file_path = os.path.join(git_helper.clone_path, file_name)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(file_content)
+            plan = json.loads(json_response_text)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=500, detail=f"Invalid JSON response from Gemini: {response_text}")
+
+        for step in plan:
+            action = step.get("action")
+            if action == "REPLACE":
+                file_path_str = step.get("file_path")
+                if not file_path_str:
+                    raise HTTPException(status_code=400, detail=f"Invalid REPLACE action: missing file_path")
+                
+                file_path = os.path.join(git_helper.clone_path, file_path_str)
+                old_string = step.get("old_string")
+                new_string = step.get("new_string")
+                
+                if not all([old_string is not None, new_string is not None]):
+                    raise HTTPException(status_code=400, detail=f"Invalid REPLACE action: {step}")
+
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                
+                new_content = content.replace(old_string, new_string)
+
+                if content == new_content:
+                    logger.warning(f"REPLACE action did not change file {file_path}. Old string might not have been found.")
+
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+
+            elif action == "RUN":
+                command_to_run = step.get("command")
+                if not command_to_run:
+                    raise HTTPException(status_code=400, detail=f"Invalid RUN action: {step}")
+                
+                result = subprocess.run(
+                    command_to_run,
+                    shell=True,
+                    check=False,
+                    cwd=git_helper.clone_path,
+                    capture_output=True,
+                    text=True
+                )
+                logger.info(f"Command '{command_to_run}' executed with exit code {result.returncode}")
+                if result.stdout:
+                    logger.info(f"stdout:\n{result.stdout}")
+                if result.stderr:
+                    logger.error(f"stderr:\n{result.stderr}")
+                
+                if result.returncode != 0:
+                    raise HTTPException(status_code=400, detail=f"Command '{command_to_run}' failed with exit code {result.returncode}:\n{result.stderr}")
+
+
+            elif action == "WRITE":
+                file_path_str = step.get("file_path")
+                if not file_path_str:
+                    raise HTTPException(status_code=400, detail=f"Invalid WRITE action: missing file_path")
+
+                file_path = os.path.join(git_helper.clone_path, file_path_str)
+                content = step.get("content")
+                if content is None:
+                    raise HTTPException(status_code=400, detail=f"Invalid WRITE action: {step}")
+                
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                    
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
         
         # Commit and push
         git_helper.commit_and_push(
