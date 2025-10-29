@@ -244,28 +244,34 @@ function App() {
 
   return (
     <Page header={header}>
-      {!selectedRepo && (
-        <PageSection>
-          <Select
-            variant="single"
-            onToggle={(_event, isOpen) => setIsOpen(isOpen)}
-            onSelect={onSelect}
-            selections={selectedRepo}
-            isOpen={isOpen}
-            toggle={(toggleRef) => (
-              <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
-                {selectedRepo || "Select a Repository"}
-              </MenuToggle>
-            )}
-          >
-            {repos.map((repo) => (
-              <SelectOption key={repo} value={repo}>
-                {repo}
-              </SelectOption>
-            ))}
-          </Select>
-        </PageSection>
-      )}
+      <PageSection>
+        <Select
+          variant="single"
+          onToggle={(_event, isOpen) => setIsOpen(isOpen)}
+          onSelect={onSelect}
+          selections={selectedRepo}
+          isOpen={isOpen}
+          toggle={(toggleRef) => (
+            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+              {selectedRepo || "Select a Repository"}
+            </MenuToggle>
+          )}
+          style={{ width: '300px' }}
+        >
+          {repos.map((repo) => (
+            <SelectOption key={repo} value={repo}>
+              {repo}
+            </SelectOption>
+          ))}
+        </Select>
+        {!selectedRepo && (
+          <EmptyState style={{ marginTop: '1rem' }}>
+            <EmptyStateBody>
+              Please select a repository to begin.
+            </EmptyStateBody>
+          </EmptyState>
+        )}
+      </PageSection>
 
       {selectedRepo && !selectedIssue && (
         <>
