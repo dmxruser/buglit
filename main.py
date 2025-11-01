@@ -1,5 +1,6 @@
 import os
 import logging
+import logging.config
 import time
 import jwt
 import requests
