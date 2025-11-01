@@ -6,3 +6,4 @@ requests-oauthlib
 python-dotenv
 pyjwt[crypto]
 redis
+pydantic-settings
