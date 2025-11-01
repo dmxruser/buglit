@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from pathlib import Path
 from typing import Optional
+import os
 
 class Settings(BaseSettings):
     # GitHub App settings
@@ -38,7 +39,10 @@ class Settings(BaseSettings):
     
     # File paths
     BASE_DIR: Path = Path(__file__).parent
-    TEMP_DIR: Path = BASE_DIR / "tmp"
+    if os.getenv("VERCEL") == "1":
+        TEMP_DIR: Path = Path("/tmp")
+    else:
+        TEMP_DIR: Path = BASE_DIR / "tmp"
     
     class Config:
         env_file = ".env"
