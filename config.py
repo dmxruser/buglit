@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str
     
     # Application settings
+    FRONTEND_URL: str
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
     

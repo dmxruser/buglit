@@ -274,7 +274,7 @@ def auth_github_callback(code: str):
     if not access_token:
         raise HTTPException(status_code=400, detail="Failed to get access token")
     
-    return RedirectResponse(f"http://localhost:3000/?token={access_token}")
+    return RedirectResponse(f"{settings.FRONTEND_URL}/?token={access_token}")
 
 @app.get("/issues")
 def get_issues(repo: str = "expressjs/express"):
