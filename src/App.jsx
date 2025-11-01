@@ -76,7 +76,7 @@ function App() {
       if (!token) return;
       setLoading(true);
       try {
-        const response = await fetch('http://127.0.0.1:8000/user/repos', {
+        const response = await fetch('/user/repos', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -100,7 +100,7 @@ function App() {
   const categorizeIssues = async (issues) => {
     try {
       const issueTitles = issues.map(issue => issue.title);
-      const response = await fetch('http://127.0.0.1:8000/api/v1/ai/categorize-issues', {
+      const response = await fetch('/api/v1/ai/categorize-issues', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ function App() {
     setCategorizedIssues({ Major: [], Minor: [], Bug: [] });
     try {
       console.log(`Fetching issues for repo: ${repoName}`);  // Debug log
-      const response = await fetch(`http://127.0.0.1:8000/issues?repo=${repoName}`, {
+      const response = await fetch(`/issues?repo=${repoName}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -166,7 +166,7 @@ function App() {
     setIsThinking(true);
     setPyOutput('');
     try {
-      const response = await fetch('http://127.0.0.1:8000/run-command', {
+      const response = await fetch('/run-command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ function App() {
       <Bullseye>
         <EmptyState>
           <EmptyStateBody>Please log in with your GitHub account to continue.</EmptyStateBody>
-          <Button component="a" href="http://127.0.0.1:8000/login/github" variant="primary">
+          <Button component="a" href="/login/github" variant="primary">
             Login with GitHub
           </Button>
         </EmptyState>
