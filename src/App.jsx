@@ -211,27 +211,6 @@ function App() {
   const headerToolbar = (
     <Toolbar>
       <ToolbarContent>
-        <ToolbarItem>
-          <Select
-            variant="single"
-            onToggle={(_event, isOpen) => setIsOpen(isOpen)}
-            onSelect={onSelect}
-            selections={selectedRepo}
-            isOpen={isOpen}
-            toggle={(toggleRef) => (
-              <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
-                {selectedRepo || "Select a Repository"}
-              </MenuToggle>
-            )}
-            style={{ width: '250px' }}
-          >
-            {repos.map((repo) => (
-              <SelectOption key={repo} value={repo} className="repo-option-text">
-                <Truncate content={repo} />
-              </SelectOption>
-            ))}
-          </Select>
-        </ToolbarItem>
       </ToolbarContent>
     </Toolbar>
   );
@@ -277,6 +256,32 @@ function App() {
   const sidebar = (
     <PageSidebar isSidebarOpen={isSidebarOpen}>
       <PageSidebarBody>
+        <Select
+          variant="single"
+          onToggle={(_event, isOpen) => setIsOpen(isOpen)}
+          onSelect={onSelect}
+          selections={selectedRepo}
+          isOpen={isOpen}
+          toggle={(toggleRef) => (
+            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+              {selectedRepo || "Select a Repository"}
+            </MenuToggle>
+          )}
+          style={{ width: '250px' }}
+        >
+          {repos.map((repo) => (
+            <SelectOption key={repo} value={repo} className="repo-option-text">
+              <Truncate content={repo} />
+            </SelectOption>
+          ))}
+        </Select>
+        {!selectedRepo && (
+          <EmptyState style={{ marginTop: '1rem' }}>
+            <EmptyStateBody>
+              Please select a repository to begin.
+            </EmptyStateBody>
+          </EmptyState>
+        )}
         <Nav>
           <NavList>
             <Title headingLevel="h2">Categories</Title>
@@ -293,14 +298,6 @@ function App() {
 
   return (
     <Page header={header} sidebar={sidebar}>
-      {!selectedRepo && (
-        <EmptyState style={{ marginTop: '1rem' }}>
-          <EmptyStateBody>
-            Please select a repository to begin.
-          </EmptyStateBody>
-        </EmptyState>
-      )}
-
       {selectedRepo && !selectedIssue && (
         <>
           {!selectedCategory ? (
