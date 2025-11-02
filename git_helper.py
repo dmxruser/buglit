@@ -1,6 +1,7 @@
 import subprocess
 import os
 from github import Github
+import base64
 
 class GitHelper:
     def __init__(self, repo_full_name, token, default_branch):
@@ -52,14 +53,14 @@ class GitHelper:
             for root, _, files in os.walk(self.clone_path):
                 for name in files:
                     file_path = os.path.join(root, name)
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, 'rb') as f: # Read in binary mode
                         content = f.read()
                     
                     # PyGithub expects paths relative to the repo root
                     repo_path = os.path.relpath(file_path, self.clone_path)
                     
                     # Create a blob for the file content
-                    blob = self.repo.create_git_blob(content, 'utf-8')
+                    blob = self.repo.create_git_blob(base64.b64encode(content).decode('utf-8'), 'base64')
                     tree_elements.append(
                         {
                             "path": repo_path,
