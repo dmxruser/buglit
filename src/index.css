@@ -48,3 +48,8 @@ body {
 .issue-list-item:hover {
   background-color: #f0f0f0;
 }
+
+/* Force Remove Roundness */
+* {
+  border-radius: 0 !important;
+}
