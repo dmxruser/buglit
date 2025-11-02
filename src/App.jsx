@@ -34,6 +34,7 @@ import {
   SidebarContent,
   SidebarPanel
 } from '@patternfly/react-core';
+import { ExclamationTriangleIcon, InfoCircleIcon, BugIcon } from '@patternfly/react-icons';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -182,8 +183,7 @@ function App() {
       setPyOutput(data);
     } catch (error) {
       console.error('Error sending command to py:', error);
-    }
-    finally {
+    } finally {
       setIsThinking(false);
     }
   };
@@ -247,6 +247,12 @@ function App() {
     </PageSection>
   );
 
+  const categoryIcons = {
+    Major: <ExclamationTriangleIcon />,
+    Minor: <InfoCircleIcon />,
+    Bug: <BugIcon />
+  };
+
   const sidebar = (
     <Sidebar orientation="stack">
       <SidebarPanel>
@@ -261,7 +267,7 @@ function App() {
               <DataListItemRow>
                 <DataListCell>
                   <Content>
-                    <Content component="h3">{category}</Content>
+                    <Content component="h3">{categoryIcons[category]} {category}</Content>
                     <Content component="p">{issues.length} issues</Content>
                   </Content>
                 </DataListCell>
