@@ -295,7 +295,14 @@ function App() {
       {!selectedRepo && (
         <EmptyState style={{ marginTop: '1rem' }}>
           <EmptyStateBody>
-            Please select a repository to begin.
+            Please select a repository to start.
+          </EmptyStateBody>
+        </EmptyState>
+      )}
+      {!selectedCategory && (
+        <EmptyState style={{ marginTop: '1rem' }}>
+          <EmptyStateBody>
+            Please select a category to continue on.
           </EmptyStateBody>
         </EmptyState>
       )}
