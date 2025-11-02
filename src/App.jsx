@@ -28,7 +28,8 @@ import {
   ToolbarItem,
   Select,
   SelectOption,
-  MenuToggle
+  MenuToggle,
+  Truncate
 } from '@patternfly/react-core';
 
 function App() {
@@ -260,7 +261,7 @@ function App() {
         >
           {repos.map((repo) => (
             <SelectOption key={repo} value={repo} className="repo-option-text">
-              {repo}
+              <Truncate content={repo} />
             </SelectOption>
           ))}
         </Select>
