@@ -186,8 +186,7 @@ function App() {
       setPyOutput(data);
     } catch (error) {
       console.error('Error sending command to py:', error);
-    }
-    finally {
+    } finally {
       setIsThinking(false);
     }
   };
@@ -213,7 +212,25 @@ function App() {
     <Toolbar>
       <ToolbarContent>
         <ToolbarItem>
-          
+          <Select
+            variant="single"
+            onToggle={(_event, isOpen) => setIsOpen(isOpen)}
+            onSelect={onSelect}
+            selections={selectedRepo}
+            isOpen={isOpen}
+            toggle={(toggleRef) => (
+              <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+                {selectedRepo || "Select a Repository"}
+              </MenuToggle>
+            )}
+            style={{ width: '250px' }}
+          >
+            {repos.map((repo) => (
+              <SelectOption key={repo} value={repo} className="repo-option-text">
+                <Truncate content={repo} />
+              </SelectOption>
+            ))}
+          </Select>
         </ToolbarItem>
       </ToolbarContent>
     </Toolbar>
@@ -276,34 +293,13 @@ function App() {
 
   return (
     <Page header={header} sidebar={sidebar}>
-      <PageSection>
-        <Select
-          variant="single"
-          onToggle={(_event, isOpen) => setIsOpen(isOpen)}
-          onSelect={onSelect}
-          selections={selectedRepo}
-          isOpen={isOpen}
-          toggle={(toggleRef) => (
-            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
-              {selectedRepo || "Select a Repository"}
-            </MenuToggle>
-          )}
-          style={{ width: '250px' }}
-        >
-          {repos.map((repo) => (
-            <SelectOption key={repo} value={repo} className="repo-option-text">
-              <Truncate content={repo} />
-            </SelectOption>
-          ))}
-        </Select>
-        {!selectedRepo && (
-          <EmptyState style={{ marginTop: '1rem' }}>
-            <EmptyStateBody>
-              Please select a repository to begin.
-            </EmptyStateBody>
-          </EmptyState>
-        )}
-      </PageSection>
+      {!selectedRepo && (
+        <EmptyState style={{ marginTop: '1rem' }}>
+          <EmptyStateBody>
+            Please select a repository to begin.
+          </EmptyStateBody>
+        </EmptyState>
+      )}
 
       {selectedRepo && !selectedIssue && (
         <>
