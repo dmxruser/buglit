@@ -267,7 +267,7 @@ function App() {
               <DataListItemRow>
                 <DataListCell>
                   <Content>
-                    <Content component="h3">{categoryIcons[category]} {category}</Content>
+                    <Content component="h3">{categoryIcons[category]}</Content>
                     <Content component="p">{issues.length} issues</Content>
                   </Content>
                 </DataListCell>
