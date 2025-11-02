@@ -345,7 +345,7 @@ function App() {
                   placeholder="Send a command to py..."
                 />
                 <Button onClick={handlePyAction} variant="primary" style={{ marginTop: '1rem' }}>
-                  Do that
+                  Check Button Symbol Here
                 </Button>
                 <div style={{ marginTop: '1rem' }}>
                   {isThinking ? <Spinner /> : <CodeBlock><pre>{pyOutput}</pre></CodeBlock>}
