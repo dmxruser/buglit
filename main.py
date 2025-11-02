@@ -254,7 +254,7 @@ def login_github():
         f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}"
     )
 
-@app.get("/auth/github/callback")
+@app.get("/api/auth/github/callback")
 def auth_github_callback(code: str):
     """Handle GitHub OAuth callback."""
     params = {

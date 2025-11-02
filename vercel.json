@@ -19,6 +19,10 @@
       "dest": "/api/index.py"
     },
     {
+      "src": "/api/auth/github/callback",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/auth/github/callback",
       "dest": "/api/index.py"
     },
