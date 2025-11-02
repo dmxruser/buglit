@@ -292,6 +292,14 @@ function App() {
 
   return (
     <Page header={header} sidebar={sidebar}>
+      {!selectedRepo && (
+        <EmptyState style={{ marginTop: '1rem' }}>
+          <EmptyStateBody>
+            Please select a repository to begin.
+          </EmptyStateBody>
+        </EmptyState>
+      )}
+
       {selectedRepo && !selectedIssue && (
         <>
           {!selectedCategory ? (
