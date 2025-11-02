@@ -292,42 +292,37 @@ function App() {
 
   return (
     <Page header={header} sidebar={sidebar}>
-      {!selectedRepo && (
+      {!selectedRepo ? (
         <EmptyState style={{ marginTop: '1rem' }}>
           <EmptyStateBody>
-            Please select a repository to start.
+            Please select a repository to begin.
           </EmptyStateBody>
         </EmptyState>
-      )}
-      {!selectedCategory && (
-        <EmptyState style={{ marginTop: '1rem' }}>
-          <EmptyStateBody>
-            Please select a category to continue on.
-          </EmptyStateBody>
-        </EmptyState>
-      )}
-
-      {selectedRepo && !selectedIssue && (
-        <>
-          {!selectedCategory ? (
-            <PageSection>
-              {/* This content is now in the sidebar */}
-            </PageSection>
-          ) : (
-            <PageSection>
-              <Button
-                variant="link"
-                icon={<MdArrowBack />}
-                onClick={() => setSelectedCategory(null)}
-                style={{ marginBottom: '1rem' }}
-                iconPosition="left"
-              >
-                Back to Categories
-              </Button>
-              {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
-            </PageSection>
-          )}
-        </>
+      ) : (
+        selectedRepo && !selectedIssue && (
+          <>
+            {!selectedCategory ? (
+              <EmptyState style={{ marginTop: '1rem' }}>
+                <EmptyStateBody>
+                  Please select a category to continue on.
+                </EmptyStateBody>
+              </EmptyState>
+            ) : (
+              <PageSection>
+                <Button
+                  variant="link"
+                  icon={<MdArrowBack />}
+                  onClick={() => setSelectedCategory(null)}
+                  style={{ marginBottom: '1rem' }}
+                  iconPosition="left"
+                >
+                  Back to Categories
+                </Button>
+                {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
+              </PageSection>
+            )}
+          </>
+        )
       )}
 
       {selectedIssue && (
