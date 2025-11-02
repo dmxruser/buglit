@@ -29,7 +29,10 @@ import {
   Select,
   SelectOption,
   MenuToggle,
-  Truncate
+  Truncate,
+  Sidebar,
+  SidebarContent,
+  SidebarPanel
 } from '@patternfly/react-core';
 
 function App() {
@@ -179,7 +182,8 @@ function App() {
       setPyOutput(data);
     } catch (error) {
       console.error('Error sending command to py:', error);
-    } finally {
+    }
+    finally {
       setIsThinking(false);
     }
   };
@@ -242,10 +246,10 @@ function App() {
       )}
     </PageSection>
   );
-// test
+
   const sidebar = (
-    <PageSidebar isSidebarOpen={isSidebarOpen}>
-      <PageSidebarBody>
+    <Sidebar orientation="stack">
+      <SidebarPanel>
         <Title headingLevel="h2">Categories</Title>
         <DataList aria-label="Issue categories">
           {Object.entries(categorizedIssues).map(([category, issues]) => (
@@ -265,96 +269,99 @@ function App() {
             </DataListItem>
           ))}
         </DataList>
-      </PageSidebarBody>
-    </PageSidebar>
+      </SidebarPanel>
+      <SidebarContent>
+        <PageSection>
+          <Select
+            variant="single"
+            onToggle={(_event, isOpen) => setIsOpen(isOpen)}
+            onSelect={onSelect}
+            selections={selectedRepo}
+            isOpen={isOpen}
+            toggle={(toggleRef) => (
+              <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+                {selectedRepo || "Select a Repository"}
+              </MenuToggle>
+            )}
+            style={{ width: '300px' }}
+          >
+            {repos.map((repo) => (
+              <SelectOption key={repo} value={repo} className="repo-option-text">
+                <Truncate content={repo} />
+              </SelectOption>
+            ))}
+          </Select>
+          {!selectedRepo && (
+            <EmptyState style={{ marginTop: '1rem' }}>
+              <EmptyStateBody>
+                Please select a repository to begin.
+              </EmptyStateBody>
+            </EmptyState>
+          )}
+        </PageSection>
+
+        {selectedRepo && !selectedIssue && (
+          <>
+            {!selectedCategory ? (
+              <PageSection>
+                {/* This content is now in the sidebar */}
+              </PageSection>
+            ) : (
+              <PageSection>
+                <Button
+                  variant="link"
+                  icon={<MdArrowBack />}
+                  onClick={() => setSelectedCategory(null)}
+                  style={{ marginBottom: '1rem' }}
+                  iconPosition="left"
+                >
+                  Back to Categories
+                </Button>
+                {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
+              </PageSection>
+            )}
+          </>
+        )}
+
+        {selectedIssue && (
+          <PageSection>
+            <Button onClick={handleBackToIssues} variant="primary" style={{ marginBottom: '1rem' }}>
+              Back to Issues
+            </Button>
+            <Card>
+              <CardTitle>
+                <Title headingLevel="h2">{selectedIssue.title}</Title>
+              </CardTitle>
+              <CardBody>
+                <Content>
+                  <Content component="p">Issue #{selectedIssue.number}</Content>
+                  <Content component="p">{selectedIssue.body}</Content>
+                </Content>
+                <div style={{ marginTop: '1rem' }}>
+                  <TextInput
+                    value={aiTextBox}
+                    onChange={(_event, value) => setAiTextBox(value)}
+                    aria-label="AI command input"
+                    placeholder="Send a command to py..."
+                  />
+                  <Button onClick={handlePyAction} variant="primary" style={{ marginTop: '1rem' }}>
+                    Do that
+                  </Button>
+                  <div style={{ marginTop: '1rem' }}>
+                    {isThinking ? <Spinner /> : <CodeBlock><pre>{pyOutput}</pre></CodeBlock>}
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </PageSection>
+        )}
+      </SidebarContent>
+    </Sidebar>
   );
 
   return (
-    <Page header={header} sidebar={sidebar}>
-      <PageSection>
-        <Select
-          variant="single"
-          onToggle={(_event, isOpen) => setIsOpen(isOpen)}
-          onSelect={onSelect}
-          selections={selectedRepo}
-          isOpen={isOpen}
-          toggle={(toggleRef) => (
-            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
-              {selectedRepo || "Select a Repository"}
-            </MenuToggle>
-          )}
-          style={{ width: '250px' }}
-        >
-          {repos.map((repo) => (
-            <SelectOption key={repo} value={repo} className="repo-option-text">
-              <Truncate content={repo} />
-            </SelectOption>
-          ))}
-        </Select>
-        {!selectedRepo && (
-          <EmptyState style={{ marginTop: '1rem' }}>
-            <EmptyStateBody>
-              Please select a repository to begin.
-            </EmptyStateBody>
-          </EmptyState>
-        )}
-      </PageSection>
-
-      {selectedRepo && !selectedIssue && (
-        <>
-          {!selectedCategory ? (
-            <PageSection>
-              {/* This content is now in the sidebar */}
-            </PageSection>
-          ) : (
-            <PageSection>
-              <Button
-                variant="link"
-                icon={<MdArrowBack />}
-                onClick={() => setSelectedCategory(null)}
-                style={{ marginBottom: '1rem' }}
-                iconPosition="left"
-              >
-                Back to Categories
-              </Button>
-              {renderIssueList(selectedCategory, categorizedIssues[selectedCategory])}
-            </PageSection>
-          )}
-        </>
-      )}
-
-      {selectedIssue && (
-        <PageSection>
-          <Button onClick={handleBackToIssues} variant="primary" style={{ marginBottom: '1rem' }}>
-            Back to Issues
-          </Button>
-          <Card>
-            <CardTitle>
-              <Title headingLevel="h2">{selectedIssue.title}</Title>
-            </CardTitle>
-            <CardBody>
-              <Content>
-                <Content component="p">Issue #{selectedIssue.number}</Content>
-                <Content component="p">{selectedIssue.body}</Content>
-              </Content>
-              <div style={{ marginTop: '1rem' }}>
-                <TextInput
-                  value={aiTextBox}
-                  onChange={(_event, value) => setAiTextBox(value)}
-                  aria-label="AI command input"
-                  placeholder="Send a command to py..."
-                />
-                <Button onClick={handlePyAction} variant="primary" style={{ marginTop: '1rem' }}>
-                  Do that
-                </Button>
-                <div style={{ marginTop: '1rem' }}>
-                  {isThinking ? <Spinner /> : <CodeBlock><pre>{pyOutput}</pre></CodeBlock>}
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-        </PageSection>
-      )}
+    <Page header={header}>
+      {sidebar}
     </Page>
   );
 }
