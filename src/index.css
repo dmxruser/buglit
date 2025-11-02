@@ -27,6 +27,18 @@ body {
 
   /* Hover/Accent Color */
   --pf-v6-global--active-color--100: #e6f0ff;
+
+  /* Remove Roundness */
+  --pf-v6-global--BorderRadius--sm: 0;
+  --pf-v6-global--BorderRadius--md: 0;
+  --pf-v6-global--BorderRadius--lg: 0;
+  --pf-v6-c-button--BorderRadius: 0;
+  --pf-v6-c-card--BorderRadius: 0;
+  --pf-v6-c-data-list__item--BorderRadius: 0;
+  --pf-v6-c-nav__link--BorderRadius: 0;
+  --pf-v6-c-text-input--BorderRadius: 0;
+  --pf-v6-c-select__toggle--BorderRadius: 0;
+  --pf-v6-c-menu--BorderRadius: 0;
 }
 
 .repo-card:hover {
