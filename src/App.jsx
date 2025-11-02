@@ -242,9 +242,35 @@ function App() {
       )}
     </PageSection>
   );
+// test
+  const sidebar = (
+    <PageSidebar isSidebarOpen={isSidebarOpen}>
+      <PageSidebarBody>
+        <Title headingLevel="h2">Categories</Title>
+        <DataList aria-label="Issue categories">
+          {Object.entries(categorizedIssues).map(([category, issues]) => (
+            <DataListItem
+              key={category}
+              isSelectable
+              onClick={() => handleCategorySelect(category)}
+            >
+              <DataListItemRow>
+                <DataListCell>
+                  <Content>
+                    <Content component="h3">{category}</Content>
+                    <Content component="p">{issues.length} issues</Content>
+                  </Content>
+                </DataListCell>
+              </DataListItemRow>
+            </DataListItem>
+          ))}
+        </DataList>
+      </PageSidebarBody>
+    </PageSidebar>
+  );
 
   return (
-    <Page header={header}>
+    <Page header={header} sidebar={sidebar}>
       <PageSection>
         <Select
           variant="single"
@@ -257,7 +283,7 @@ function App() {
               {selectedRepo || "Select a Repository"}
             </MenuToggle>
           )}
-          style={{ width: '300px' }}
+          style={{ width: '250px' }}
         >
           {repos.map((repo) => (
             <SelectOption key={repo} value={repo} className="repo-option-text">
@@ -278,25 +304,7 @@ function App() {
         <>
           {!selectedCategory ? (
             <PageSection>
-              <Title headingLevel="h2">Categories</Title>
-              <DataList aria-label="Issue categories">
-                {Object.entries(categorizedIssues).map(([category, issues]) => (
-                  <DataListItem
-                    key={category}
-                    isSelectable
-                    onClick={() => handleCategorySelect(category)}
-                  >
-                    <DataListItemRow>
-                      <DataListCell>
-                        <Content>
-                          <Content component="h3">{category}</Content>
-                          <Content component="p">{issues.length} issues</Content>
-                        </Content>
-                      </DataListCell>
-                    </DataListItemRow>
-                  </DataListItem>
-                ))}
-              </DataList>
+              {/* This content is now in the sidebar */}
             </PageSection>
           ) : (
             <PageSection>
