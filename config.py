@@ -8,12 +8,11 @@ class Settings(BaseSettings):
     GITHUB_APP_ID: str
     GITHUB_CLIENT_ID: str
     GITHUB_CLIENT_SECRET: str
-    GITHUB_PRIVATE_KEY_PATH: str
+    GITHUB_PRIVATE_KEY: str
 
     @property
     def private_key_bytes(self) -> bytes:
-        with open(self.GITHUB_PRIVATE_KEY_PATH, 'rb') as f:
-            return f.read()
+        return self.GITHUB_PRIVATE_KEY.encode('utf-8')
     
     # Redis settings
     REDIS_HOST: str = "localhost"
