@@ -31,7 +31,10 @@ import {
   MenuToggle,
   Truncate,
   PageSidebar,
-  PageSidebarBody
+  PageSidebarBody,
+  Nav,
+  NavList,
+  NavItem
 } from '@patternfly/react-core';
 import { ExclamationTriangleIcon, InfoCircleIcon, BugIcon } from '@patternfly/react-icons';
 
@@ -183,7 +186,8 @@ function App() {
       setPyOutput(data);
     } catch (error) {
       console.error('Error sending command to py:', error);
-    } finally {
+    }
+    finally {
       setIsThinking(false);
     }
   };
@@ -256,25 +260,16 @@ function App() {
   const sidebar = (
     <PageSidebar isSidebarOpen={isSidebarOpen}>
       <PageSidebarBody>
-        <Title headingLevel="h2">Categories</Title>
-        <DataList aria-label="Issue categories">
-          {Object.entries(categorizedIssues).map(([category, issues]) => (
-            <DataListItem
-              key={category}
-              isSelectable
-              onClick={() => handleCategorySelect(category)}
-            >
-              <DataListItemRow>
-                <DataListCell>
-                  <Content>
-                    <Content component="h3">{categoryIcons[category]}</Content>
-                    <Content component="p">{issues.length} issues</Content>
-                  </Content>
-                </DataListCell>
-              </DataListItemRow>
-            </DataListItem>
-          ))}
-        </DataList>
+        <Nav>
+          <NavList>
+            <Title headingLevel="h2">Categories</Title>
+            {Object.entries(categorizedIssues).map(([category, issues]) => (
+              <NavItem key={category} onClick={() => handleCategorySelect(category)} isSelectable>
+                {categoryIcons[category]} {issues.length} {category}
+              </NavItem>
+            ))}
+          </NavList>
+        </Nav>
       </PageSidebarBody>
     </PageSidebar>
   );
@@ -293,7 +288,7 @@ function App() {
               {selectedRepo || "Select a Repository"}
             </MenuToggle>
           )}
-          style={{ width: '300px' }}
+          style={{ width: '250px' }}
         >
           {repos.map((repo) => (
             <SelectOption key={repo} value={repo} className="repo-option-text">
