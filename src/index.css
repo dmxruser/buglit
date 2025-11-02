@@ -39,6 +39,7 @@ body {
   --pf-v6-c-text-input--BorderRadius: 0;
   --pf-v6-c-select__toggle--BorderRadius: 0;
   --pf-v6-c-menu--BorderRadius: 0;
+  --pf-v6-c-form-control--BorderRadius: 0;
 }
 
 .repo-card:hover {
@@ -47,6 +48,11 @@ body {
 
 .issue-list-item:hover {
   background-color: #f0f0f0;
+}
+
+/* Force Remove Roundness */
+* {
+  border-radius: 0 !important;
 }
 
 /* Force Remove Roundness */
