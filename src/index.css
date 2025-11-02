@@ -8,6 +8,25 @@ body {
   --pf-t--global--font--family--text: "Inter", sans-serif;
   --pf-t--global--font--family--heading: "Inter", sans-serif;
   --pf-t--global--font--family--monospace: "Inter", sans-serif;
+
+  /* Swiss Color Palette */
+  --pf-v6-global--primary-color--100: #005bff; /* Primary Blue */
+  --pf-v6-global--BackgroundColor--100: #ffffff; /* White Background */
+  --pf-v6-global--Color--100: #000000; /* Black Text */
+  --pf-v6-global--Color--200: #333333; /* Dark Gray for secondary text */
+
+  /* Button Colors */
+  --pf-v6-c-button--m-primary--BackgroundColor: var(--pf-v6-global--primary-color--100);
+  --pf-v6-c-button--m-primary--Color: #ffffff;
+  --pf-v6-c-button--m-primary--hover--BackgroundColor: #004acc;
+  --pf-v6-c-button--m-primary--active--BackgroundColor: #003999;
+
+  /* Link Colors */
+  --pf-v6-c-button--m-link--Color: var(--pf-v6-global--primary-color--100);
+  --pf-v6-c-button--m-link--hover--Color: #004acc;
+
+  /* Hover/Accent Color */
+  --pf-v6-global--active-color--100: #e6f0ff;
 }
 
 .repo-card:hover {

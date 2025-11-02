@@ -259,7 +259,7 @@ function App() {
           style={{ width: '300px' }}
         >
           {repos.map((repo) => (
-            <SelectOption key={repo} value={repo}>
+            <SelectOption key={repo} value={repo} className="repo-option-text">
               {repo}
             </SelectOption>
           ))}
