@@ -275,13 +275,7 @@ function App() {
             </SelectOption>
           ))}
         </Select>
-        {!selectedRepo && (
-          <EmptyState style={{ marginTop: '1rem' }}>
-            <EmptyStateBody>
-              Please select a repository to begin.
-            </EmptyStateBody>
-          </EmptyState>
-        )}
+
         <Nav>
           <NavList>
             <Title headingLevel="h2">Categories</Title>
