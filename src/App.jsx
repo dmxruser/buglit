@@ -253,7 +253,7 @@ function App() {
           selections={selectedRepo}
           isOpen={isOpen}
           toggle={(toggleRef) => (
-            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
+            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen} isFullWidth>
               {selectedRepo || "Select a Repository"}
             </MenuToggle>
           )}
