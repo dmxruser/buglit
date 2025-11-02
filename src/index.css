@@ -1,15 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap');
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@1,14..32,100..900&display=swap');
 
 :root {
-  --pf-t--global--font--family--text: "Montserrat", sans-serif;
-  --pf-t--global--font--family--heading: "Montserrat", sans-serif;
-  --pf-t--global--font--family--monospace: "Montserrat", sans-serif;
-  --pf-v6-c-button--BorderRadius: 0;
-  --pf-v6-c-card--BorderRadius: 0;
-  --pf-v6-c-data-list__item--BorderRadius: 0;
-  --pf-v6-c-nav__link--BorderRadius: 0;
-  --pf-v6-c-text-input--BorderRadius: 0;
+  --pf-t--global--font--family--text: "Inter", sans-serif;
+  --pf-t--global--font--family--heading: "Inter", sans-serif;
+  --pf-t--global--font--family--monospace: "Inter", sans-serif;
 }
 
 .repo-card:hover {
