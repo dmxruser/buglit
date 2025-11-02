@@ -257,7 +257,7 @@ function App() {
               {selectedRepo || "Select a Repository"}
             </MenuToggle>
           )}
-          style={{ width: '250px' }}
+          style={{ width: '300px' }}
         >
           {repos.map((repo) => (
             <SelectOption key={repo} value={repo} className="repo-option-text">
