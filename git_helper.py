@@ -1,6 +1,6 @@
 import subprocess
 import os
-from github import Github
+from github import Github, InputGitTreeElement
 import base64
 
 class GitHelper:
@@ -62,12 +62,12 @@ class GitHelper:
                     # Create a blob for the file content
                     blob = self.repo.create_git_blob(base64.b64encode(content).decode('utf-8'), 'base64')
                     tree_elements.append(
-                        {
-                            "path": repo_path,
-                            "mode": '100644',  # file mode
-                            "type": 'blob',
-                            "sha": blob.sha
-                        }
+                        InputGitTreeElement(
+                            path=repo_path,
+                            mode='100644',
+                            type='blob',
+                            sha=blob.sha
+                        )
                     )
             
             # Create a new tree
