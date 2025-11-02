@@ -31,6 +31,14 @@
       "dest": "/api/index.py"
     },
     {
+      "src": "/issues",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/run-command",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.py"
     },
