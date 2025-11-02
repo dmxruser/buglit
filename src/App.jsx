@@ -253,11 +253,11 @@ function App() {
           selections={selectedRepo}
           isOpen={isOpen}
           toggle={(toggleRef) => (
-            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen} isFullWidth>
+            <MenuToggle ref={toggleRef} onClick={() => setIsOpen(!isOpen)} isExpanded={isOpen}>
               {selectedRepo || "Select a Repository"}
             </MenuToggle>
           )}
-          style={{ width: '300px' }}
+          style={{ width: '100px' }}
         >
           {repos.map((repo) => (
             <SelectOption key={repo} value={repo} className="repo-option-text">
