@@ -64,11 +64,19 @@ body {
 }
 
 /* Specific overrides for PatternFly Select component roundness */
-.pf-v6-c-select,
+.pf-v6-c-select {
+  border-radius: 0 !important;
+  --pf-v6-c-form-control--BorderRadius: 0;
+}
+
 .pf-v6-c-select__toggle,
 .pf-v6-c-select__menu,
 .pf-v6-c-select__menu-item {
   border-radius: 0 !important;
+}
+
+.pf-v6-c-select .pf-v6-c-menu-toggle {
+  --pf-v6-c-form-control--BorderRadius: 0;
 }
 
 /* Force Remove Roundness */
