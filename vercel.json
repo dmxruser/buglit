@@ -15,8 +15,16 @@
   ],
   "routes": [
     {
+      "src": "/login/github",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/auth/github/callback",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/api/(.*)",
-      "dest": "api/index.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/(.*)",
