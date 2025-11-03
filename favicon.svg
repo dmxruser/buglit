@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="favicon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     inkscape:zoom="1"
+     inkscape:cx="252.5"
+     inkscape:cy="298.5"
+     inkscape:window-width="2226"
+     inkscape:window-height="1225"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#000000;stroke-width:4.52213;paint-order:stroke fill markers"
+       id="rect1"
+       width="512.01288"
+       height="511.99628"
+       x="0.0078989863"
+       y="0.0039069862"
+       ry="0" />
+    <path
+       id="path1"
+       style="fill:#c01c28;stroke-width:1.84575;paint-order:stroke fill markers"
+       inkscape:transform-center-x="-1.4382321e-05"
+       inkscape:transform-center-y="-35.577755"
+       d="M 307.42017,80.169062 205.88782,255.84582 283.84339,390.90985 H 487.01547 Z M 205.88782,255.84582 160.63544,177.44499 37.423921,390.90985 h 90.400929 z" />
+    <path
+       id="path1-3"
+       style="fill:#ffa348;stroke-width:1.84575;paint-order:stroke fill markers"
+       inkscape:transform-center-x="-1.4294184e-05"
+       inkscape:transform-center-y="-35.577752"
+       d="M 205.89141,255.84582 127.82845,390.90985 H 283.84696 Z" />
+  </g>
+</svg>
