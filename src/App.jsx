@@ -37,6 +37,7 @@ import {
   NavItem
 } from '@patternfly/react-core';
 import { ExclamationTriangleIcon, InfoCircleIcon, BugIcon } from '@patternfly/react-icons';
+import logoText from '../logos/logotext.svg';
 
 function App() {
   const [token, setToken] = useState(null);
@@ -154,6 +155,8 @@ function App() {
       }
     } catch (error) {
       console.error(`Error fetching issues for ${repoName}:`, error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,6 +202,7 @@ function App() {
     return (
       <Bullseye>
         <EmptyState>
+          <img src={logoText} alt="Buglit Logo" style={{ width: '200px', marginBottom: '20px' }} />
           <EmptyStateBody>Please log in with your GitHub account to continue.</EmptyStateBody>
           <Button component="a" href="/login/github" variant="primary">
             Login with GitHub
