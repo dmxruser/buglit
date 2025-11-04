@@ -1,8 +1,11 @@
 import subprocess
 import os
-from github import Github, InputGitTreeElement
+from github import Github, InputGitTreeElement, GithubException
 import base64
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GitHelper:
     def __init__(self, repo_full_name, token, default_branch):
@@ -12,6 +15,7 @@ class GitHelper:
         self.default_branch = default_branch
         self.github_api = Github(token)
         self.repo = self.github_api.get_repo(repo_full_name)
+        logger.info(f"GitHelper initialized for repo: {repo_full_name}")
 
     def _get_auth_url(self):
         """Get the authenticated Git URL with the installation token"""
@@ -20,9 +24,9 @@ class GitHelper:
         return f"https://x-access-token:{self.token}@github.com/{self.repo_full_name}.git"
 
     def clone_repo(self):
+        logger.info(f"Cloning repo {self.repo_full_name} to {self.clone_path}")
         if os.path.exists(self.clone_path):
-            # For simplicity, we'll just remove and re-clone for now
-            # A more sophisticated approach would be to update the existing files
+            logger.info("Clone path exists, removing and re-cloning.")
             subprocess.run(["rm", "-rf", self.clone_path])
 
         os.makedirs(self.clone_path, exist_ok=True)
@@ -39,36 +43,37 @@ class GitHelper:
                     with open(file_path, 'wb') as f:
                         f.write(file_content.decoded_content)
                 except Exception as e:
-                    print(f"Error processing file {file_content.path}: {e}")
+                    logger.error(f"Error processing file {file_content.path}: {e}")
 
     def create_branch(self, branch_name: str, from_branch: str = "") -> None:
         """Create a new branch from a base branch"""
+        logger.info(f"Creating branch '{branch_name}' from '{from_branch or self.default_branch}'")
         try:
-            # Get the source branch (default to default_branch if not specified)
             source_branch = from_branch if from_branch else self.default_branch
             source = self.repo.get_branch(source_branch)
-            
-            # Create new branch reference
             self.repo.create_git_ref(
                 ref=f"refs/heads/{branch_name}",
                 sha=source.commit.sha
             )
-            
-            print(f"Created branch {branch_name} from {source_branch}")
-            
+            logger.info(f"Successfully created branch '{branch_name}'")
+        except GithubException as e:
+            if e.status == 422:  # Branch already exists
+                logger.warning(f"Branch '{branch_name}' already exists. Not creating again.")
+            else:
+                logger.error(f"Error creating branch '{branch_name}': {e}")
+                raise
         except Exception as e:
-            print(f"Error creating branch: {e}")
+            logger.error(f"An unexpected error occurred while creating branch '{branch_name}': {e}")
             raise
 
     def switch_branch(self, branch_name: str) -> None:
         """Switch to a different branch"""
+        logger.info(f"Switching to branch '{branch_name}'")
         try:
-            # Get branch reference
             ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
             if not ref:
                 raise ValueError(f"Branch {branch_name} does not exist")
                 
-            # Update working directory
             contents = [self.repo.get_contents("", ref=branch_name)]
             while contents:
                 current = contents.pop()
@@ -82,29 +87,21 @@ class GitHelper:
                     with open(file_path, 'wb') as f:
                         f.write(current.decoded_content)
                         
-            print(f"Switched to branch {branch_name}")
-            
+            logger.info(f"Successfully switched to branch '{branch_name}'")
         except Exception as e:
-            print(f"Error switching branch: {e}")
+            logger.error(f"Error switching to branch '{branch_name}': {e}")
             raise
 
     def commit_and_push(self, commit_message: str, branch: str = "") -> None:
         """
         Commit and push changes to a specific branch
-        
-        Args:
-            commit_message: The commit message
-            branch: Branch to commit to (defaults to default branch if empty)
         """
+        logger.info(f"Committing and pushing to branch '{branch or self.default_branch}'")
         try:
-            # Use specified branch or default branch
             target_branch = branch or self.default_branch
-            
-            # Get the target branch's latest commit
             branch_ref = self.repo.get_branch(target_branch)
             latest_commit = self.repo.get_commit(branch_ref.commit.sha)
             
-            # Create a new tree with the updated files
             tree_elements = []
             for root, _, files in os.walk(self.clone_path):
                 for name in files:
@@ -112,10 +109,7 @@ class GitHelper:
                     with open(file_path, 'rb') as f:
                         content = f.read()
                     
-                    # Get path relative to repo root
                     repo_path = os.path.relpath(file_path, self.clone_path)
-                    
-                    # Create blob for file content
                     blob = self.repo.create_git_blob(
                         base64.b64encode(content).decode('utf-8'),
                         'base64'
@@ -129,7 +123,6 @@ class GitHelper:
                         )
                     )
             
-            # Create new tree and commit
             new_tree = self.repo.create_git_tree(
                 tree_elements,
                 base_tree=latest_commit.commit.tree
@@ -140,24 +133,23 @@ class GitHelper:
                 parents=[latest_commit.commit]
             )
             
-            # Update branch reference
             ref = self.repo.get_git_ref(f"refs/heads/{target_branch}")
             ref.edit(new_commit.sha)
             
-            print(f"Successfully committed and pushed to {target_branch}")
-                
+            logger.info(f"Successfully committed and pushed to '{target_branch}'")
         except Exception as e:
-            print(f"Error in commit_and_push: {e}")
+            logger.error(f"Error in commit_and_push: {e}")
             raise
 
     def cleanup_branch(self, branch_name: str) -> None:
         """Delete a branch (useful for cleaning up after PR creation)"""
+        logger.info(f"Cleaning up branch '{branch_name}'")
         try:
             ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
             ref.delete()
-            print(f"Deleted branch {branch_name}")
+            logger.info(f"Successfully deleted branch '{branch_name}'")
         except Exception as e:
-            print(f"Error cleaning up branch: {e}")
+            logger.error(f"Error cleaning up branch '{branch_name}': {e}")
             raise
 
     def create_pull_request(
@@ -169,16 +161,8 @@ class GitHelper:
     ) -> dict:
         """
         Create a pull request
-        
-        Args:
-            title: PR title
-            head_branch: Source branch (the branch with your changes)
-            base_branch: Target branch (usually 'main' or 'master')
-            body: PR description/body text
-            
-        Returns:
-            Dict with PR details
         """
+        logger.info(f"Creating pull request from '{head_branch}' to '{base_branch}'")
         try:
             pr = self.repo.create_pull(
                 title=title,
@@ -186,18 +170,15 @@ class GitHelper:
                 head=head_branch,
                 base=base_branch
             )
-            
-            print(f"Created PR #{pr.number}: {pr.html_url}")
-            
+            logger.info(f"Successfully created PR #{pr.number}: {pr.html_url}")
             return {
                 'number': pr.number,
                 'html_url': pr.html_url,
                 'title': pr.title,
                 'state': pr.state
             }
-            
         except Exception as e:
-            print(f"Error creating pull request: {e}")
+            logger.error(f"Error creating pull request: {e}")
             raise
 
     def commit_and_create_pr(
@@ -211,40 +192,23 @@ class GitHelper:
     ) -> dict:
         """
         Complete workflow: create branch, commit changes, and create PR
-        
-        Args:
-            commit_message: Commit message for changes
-            pr_title: Pull request title
-            issue_number: The issue number to use for the branch name
-            pr_body: Pull request description
-            base_branch: Target branch for PR (defaults to default_branch)
-            branch_name: Custom branch name (auto-generated if not provided)
-            
-        Returns:
-            Dict with branch name, commit info, and PR details
         """
+        logger.info(f"Starting commit and PR creation for issue #{issue_number}")
         try:
-            # Use default branch if not specified
             target_base = base_branch or self.default_branch
-            
-            # Generate branch name if not provided
             if not branch_name:
                 branch_name = f"fix/issue-{issue_number}"
             
-            # Step 1: Create new branch from base
-            print(f"Creating branch {branch_name} from {target_base}...")
+            logger.info(f"Step 1: Create new branch '{branch_name}' from '{target_base}'")
             self.create_branch(branch_name, from_branch=target_base)
             
-            # Step 2: Switch to new branch
-            print(f"Switching to branch {branch_name}...")
+            logger.info(f"Step 2: Switch to new branch '{branch_name}'")
             self.switch_branch(branch_name)
             
-            # Step 3: Commit changes to new branch
-            print(f"Committing changes to {branch_name}...")
+            logger.info(f"Step 3: Commit changes to '{branch_name}'")
             self.commit_and_push(commit_message, branch=branch_name)
             
-            # Step 4: Create pull request
-            print(f"Creating pull request...")
+            logger.info("Step 4: Create pull request")
             pr_result = self.create_pull_request(
                 title=pr_title,
                 head_branch=branch_name,
@@ -252,15 +216,14 @@ class GitHelper:
                 body=pr_body
             )
             
+            logger.info("Commit and PR creation successful.")
             return {
                 'success': True,
                 'branch': branch_name,
                 'pr': pr_result
             }
-            
         except Exception as e:
-            print(f"Error in commit_and_create_pr: {e}")
-            # Try to clean up the branch if PR creation failed
+            logger.error(f"Error in commit_and_create_pr for issue #{issue_number}: {e}")
             try:
                 if branch_name:
                     self.cleanup_branch(branch_name)
