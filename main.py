@@ -491,12 +491,19 @@ def run_command(command: Command):
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
         
-        # Commit and push
-        git_helper.commit_and_push(
-            f"Fix issue #{command.issue.number}: {command.issue.title}"
+        # Commit and create a pull request
+        pr_title = f"Fix for issue #{command.issue.number}: {command.issue.title}"
+        pr_body = f"Addresses issue #{command.issue.number}: {command.issue.title}\n\n{command.issue.body}"
+        
+        pr_result = git_helper.commit_and_create_pr(
+            commit_message=pr_title,
+            pr_title=pr_title,
+            issue_number=command.issue.number,
+            pr_body=pr_body,
+            base_branch=repo.default_branch # Use the default branch as the base
         )
         
-        return {"message": "Changes applied and committed successfully", "status": "completed"}
+        return {"message": "Pull request created successfully", "status": "completed", "pr_info": pr_result}
     
     except subprocess.CalledProcessError as e:
         logger.error(f"Git error: {e}")
