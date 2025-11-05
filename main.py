@@ -308,24 +308,38 @@ def create_issue(issue: NewIssue):
 
 @app.get("/user/repos")
 async def get_user_repos():
-    """Get all repositories accessible to the app."""
+    """Get all repositories accessible to the app, with enhanced error handling."""
     try:
+        # Step 1: Attempt to get installations
         installations = get_app_installations()
+        
+        # Guard clause for no installations
         if not installations:
+            logging.info("No installations found for the app.")
             return []
         
         repo_list = []
         for installation in installations:
             installation_id = installation.get('id')
             if not installation_id:
+                logging.warning("Installation object missing 'id' field.")
                 continue
             
+            # Step 2: Attempt to get repositories for the installation
             repos = get_installation_repositories(installation_id)
             repo_list.extend([repo['full_name'] for repo in repos if 'full_name' in repo])
         
         return repo_list
+    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # CRITICAL: Log the full traceback to Vercel's runtime logs (stderr/stdout)
+        logging.exception(f"FATAL ERROR in /user/repos function: {e}")
+        
+        # Re-raise as an HTTPException for the client response
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An internal server error occurred while fetching repositories. See logs for details. Error: {str(e)}"
+        )
 
 import json
 @app.post("/run-command")
