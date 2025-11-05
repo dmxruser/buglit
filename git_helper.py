@@ -70,7 +70,18 @@ class GitHelper:
         """Switch to a different branch"""
         logger.info(f"Switching to branch '{branch_name}'")
         try:
-            ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
+            ref = None
+            retries = 3
+            for i in range(retries):
+                try:
+                    ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
+                    break
+                except GithubException as e:
+                    if e.status == 404 and i < retries - 1:
+                        logger.warning(f"Ref refs/heads/{branch_name} not found, retrying...")
+                        time.sleep(2)
+                    else:
+                        raise
             if not ref:
                 raise ValueError(f"Branch {branch_name} does not exist")
                 
@@ -133,7 +144,18 @@ class GitHelper:
                 parents=[latest_commit.commit]
             )
             
-            ref = self.repo.get_git_ref(f"refs/heads/{target_branch}")
+            ref = None
+            retries = 3
+            for i in range(retries):
+                try:
+                    ref = self.repo.get_git_ref(f"refs/heads/{target_branch}")
+                    break
+                except GithubException as e:
+                    if e.status == 404 and i < retries - 1:
+                        logger.warning(f"Ref refs/heads/{target_branch} not found, retrying...")
+                        time.sleep(2)
+                    else:
+                        raise
             ref.edit(new_commit.sha)
             
             logger.info(f"Successfully committed and pushed to '{target_branch}'")
@@ -145,7 +167,18 @@ class GitHelper:
         """Delete a branch (useful for cleaning up after PR creation)"""
         logger.info(f"Cleaning up branch '{branch_name}'")
         try:
-            ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
+            ref = None
+            retries = 3
+            for i in range(retries):
+                try:
+                    ref = self.repo.get_git_ref(f"refs/heads/{branch_name}")
+                    break
+                except GithubException as e:
+                    if e.status == 404 and i < retries - 1:
+                        logger.warning(f"Ref refs/heads/{branch_name} not found, retrying...")
+                        time.sleep(2)
+                    else:
+                        raise
             ref.delete()
             logger.info(f"Successfully deleted branch '{branch_name}'")
         except Exception as e:
