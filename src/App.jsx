@@ -215,6 +215,11 @@ function App() {
   const headerToolbar = (
     <Toolbar>
       <ToolbarContent>
+        <ToolbarItem>
+          <Button variant="secondary" onClick={() => {}}>
+            Test Button
+          </Button>
+        </ToolbarItem>
       </ToolbarContent>
     </Toolbar>
   );
