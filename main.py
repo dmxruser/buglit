@@ -121,6 +121,8 @@ def create_jwt() -> str:
     if not settings.GITHUB_APP_ID:
         raise HTTPException(status_code=500, detail="GITHUB_APP_ID is not configured")
     
+    logger.info(f"Creating JWT for App ID: {settings.GITHUB_APP_ID}")
+    
     payload = {
         'iat': int(time.time()),
         'exp': int(time.time()) + 600,
@@ -128,6 +130,9 @@ def create_jwt() -> str:
     }
     
     try:
+        key_str = settings.GITHUB_PRIVATE_KEY
+        logger.info(f"Private key loaded. Starts with: '{key_str[:30]}', ends with: '{key_str[-30:]}'")
+        
         # Use the private key bytes directly for JWT encoding
         return jwt.encode(payload, settings.private_key_bytes, algorithm='RS256')
         
