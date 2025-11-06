@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List
-from services.github_service import get_github_service, GitHubServiceError
-# cute
+from services.github_service import get_github_service, GitHubService, GitHubServiceError
 router = APIRouter(prefix="/user", tags=["user"])
 
 @router.get("/repos", response_model=List[str])
-async def get_user_repos(service: get_github_service = Depends()):
+async def get_user_repos(
+    service: GitHubService = Depends(get_github_service)  # ← Fixed!
+):
     """
     List all repositories for the authenticated user.
     """
@@ -19,7 +20,10 @@ async def get_user_repos(service: get_github_service = Depends()):
         )
 
 @router.get("/repos/search", response_model=List[str])
-async def search_user_repos(query: str = Query(..., min_length=1), service: get_github_service = Depends()):
+async def search_user_repos(
+    query: str = Query(..., min_length=1), 
+    service: GitHubService = Depends(get_github_service)  # ← Fixed!
+):
     """
     Search for repositories for the authenticated user.
     """

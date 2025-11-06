@@ -125,11 +125,24 @@ def create_jwt() -> str:
     
     logger.info(f"Creating JWT for App ID: {settings.GITHUB_APP_ID}")
     
+    # Debug: Log environment variables (excluding secrets)
+    logger.info("Environment check:")
+    logger.info(f"VERCEL: {os.getenv('VERCEL')}")
+    logger.info(f"NODE_ENV: {os.getenv('NODE_ENV')}")
+    logger.info(f"VERCEL_ENV: {os.getenv('VERCEL_ENV')}")
+    
+    # Note: GitHub's grace period for token expiration is 2 minutes
+    now = int(time.time())
     payload = {
-        'iat': int(time.time()),
-        'exp': int(time.time()) + 600,
+        'iat': now - 60,  # Start validity 1 minute in the past for clock drift
+        'exp': now + 540,  # 9 minutes (gives us 1 minute buffer before GitHub's 10 minute limit)
         'iss': int(settings.GITHUB_APP_ID)
     }
+    
+    # Debug: Log key info
+    try:
+        key_info = f"Key starts with: {settings.GITHUB_PRIVATE_KEY[:50]}..."
+        logger.info(key_info)
     
     try:
         key_str = settings.GITHUB_PRIVATE_KEY
@@ -189,66 +202,6 @@ def get_github_app_installation(repo_full_name: str) -> Github:
     auth = Auth.Token(access_token)
     return Github(auth=auth)
 
-def get_app_installations() -> list:
-    """Get all installations of the GitHub App."""
-    try:
-        jwt_token = create_jwt()
-        headers = {
-            'Authorization': f'Bearer {jwt_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-        
-        response = requests.get(
-            'https://api.github.com/app/installations',
-            headers=headers,
-            timeout=10
-        )
-        
-        if response.status_code != 200:
-            return []
-        
-        return response.json()
-    except Exception as e:
-        logger.error(f"Error fetching app installations: {e}")
-        return []
-
-def get_installation_repositories(installation_id: int) -> list:
-    """Get repositories for a specific installation."""
-    try:
-        jwt_token = create_jwt()
-        headers = {
-            'Authorization': f'Bearer {jwt_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-        
-        # Get installation token
-        url = f'https://api.github.com/app/installations/{installation_id}/access_tokens'
-        token_response = requests.post(url, headers=headers, timeout=10)
-        
-        if token_response.status_code != 201:
-            return []
-        
-        installation_token = token_response.json()['token']
-        
-        # Get repositories
-        headers = {
-            'Authorization': f'token {installation_token}',
-            'Accept': 'application/vnd.github.v3+json'
-        }
-        
-        response = requests.get(
-            'https://api.github.com/installation/repositories',
-            headers=headers,
-            timeout=10
-        )
-        
-        if response.status_code != 200:
-            return []
-        
-        return response.json().get('repositories', [])
-    except Exception as e:
-        logger.error(f"Error fetching repositories: {e}")
-        return []
 
 # Routes
 @app.get("/")
