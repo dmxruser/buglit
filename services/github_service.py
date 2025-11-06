@@ -7,6 +7,7 @@ from typing import List, Optional
 from github import Github, GithubIntegration, Auth
 from config import settings
 from models.schemas import Repository, Issue, IssueCreate, IssueUpdate
+from fastapi.concurrency import run_in_threadpool
 
 class GitHubServiceError(Exception):
     """Base exception for GitHub service errors"""
@@ -67,7 +68,7 @@ class GitHubService:
             print(f"Redis cache error (non-fatal): {e}")
         
         # Get a new token from GitHub
-        token_obj = self.integration.get_access_token(installation_id)
+        token_obj = await run_in_threadpool(self.integration.get_access_token, installation_id)
         
         # Cache the token in Redis
         try:
@@ -92,7 +93,7 @@ class GitHubService:
     
     async def get_installations(self) -> List[dict]:
         """Get all installations for the authenticated app"""
-        installations = self.integration.get_installations()
+        installations = await run_in_threadpool(self.integration.get_installations)
         return [
             {
                 'id': inst.id,
@@ -105,10 +106,15 @@ class GitHubService:
     async def get_installation_repos(self, installation_id: int) -> List[Repository]:
         """Get repositories accessible to an installation"""
         g = await self._get_github_client(installation_id)
-        installation = g.get_installation(installation_id)
+        
+        def get_repos_sync():
+            installation = g.get_installation(installation_id)
+            return list(installation.get_repos())
+
+        repos_list = await run_in_threadpool(get_repos_sync)
         
         repos = []
-        for repo in installation.get_repos():
+        for repo in repos_list:
             repos.append(Repository(
                 id=repo.id,
                 name=repo.name,
