@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "debug_app.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     },
     {
@@ -15,8 +15,42 @@
   ],
   "routes": [
     {
+      "src": "/login/github",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/auth/github/callback",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/auth/github/callback",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/user/repos",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/issues",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/run-command",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/debug_app.py"
+      "dest": "/dist/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/v1/gemini-cron",
+      "schedule": "30 1 * * *"
     }
   ]
 }

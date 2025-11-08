@@ -3,10 +3,11 @@ from typing import List, Dict
 from google import genai
 import os
 import json
+from config import settings # Import settings
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-client = genai.Client()
+client = genai.Client(api_key=settings.GEMINI_API_KEY) # Pass API key explicitly
 
 @router.post("/sort-issues", response_model=List[str])
 async def sort_issues(issue_titles: List[str] = Body(..., embed=True)):

@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from google import genai
+from config import settings # Import settings
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def create_app() -> FastAPI:
     )
     
     # Configure Gemini client
-    app.state.gemini_client = genai.Client()
+    app.state.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY) # Pass API key explicitly
     
     # CORS middleware
     app.add_middleware(
