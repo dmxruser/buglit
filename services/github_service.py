@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from github import Github, GithubIntegration, Auth
 from config import settings
-from models.schemas import Repository, Issue, IssueCreate, IssueUpdate
+from models.schemas import Repository, Issue, IssueCreate, IssueUpdate, IssueStatus
 from fastapi.concurrency import run_in_threadpool
 
 class GitHubServiceError(Exception):
@@ -25,22 +25,61 @@ class GitHubService:
     
     def __init__(self):
         self.app_id = settings.GITHUB_APP_ID
-        self.private_key = settings.private_key_bytes
-        self.redis = None
-        self.integration = None
+        # Convert private key to string in the correct format
+        if isinstance(settings.private_key_bytes, bytes):
+            self.private_key = settings.private_key_bytes.decode('utf-8')
+        elif isinstance(settings.private_key_bytes, (bytearray, memoryview)):
+            self.private_key = bytes(settings.private_key_bytes).decode('utf-8')
+        else:
+            self.private_key = str(settings.private_key_bytes)
+            
+        # Debug logs    
+        print(f"Initialized GitHub service with App ID: {self.app_id}")
+        print(f"Private key type: {type(self.private_key)}")
+        print(f"Private key length: {len(self.private_key)}")
+        print(f"Private key starts with: {self.private_key[:30]}...")
     
     async def initialize(self):
         """Initialize async components"""
-        self.redis = redis.Redis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            db=0,
-            decode_responses=True
-        )
-        
-        # Create GitHub Integration for app-level operations
-        auth = Auth.AppAuth(self.app_id, self.private_key)
-        self.integration = GithubIntegration(auth=auth)
+        # Create GitHub Integration first - this is critical
+        try:
+            auth = await run_in_threadpool(Auth.AppAuth, self.app_id, self.private_key)
+            if not auth:
+                raise GitHubServiceError("Failed to create GitHub App auth")
+                
+            self.integration = await run_in_threadpool(GithubIntegration, auth=auth)
+            if not self.integration:
+                raise GitHubServiceError("Failed to create GitHub integration")
+                
+            # Verify the integration works
+            try:
+                await run_in_threadpool(self.integration.get_app)
+            except Exception as e:
+                raise GitHubServiceError(f"GitHub integration verification failed: {e}")
+                
+        except Exception as e:
+            print(f"CRITICAL: GitHub integration initialization failed: {e}")
+            print(f"App ID: {self.app_id}")
+            print(f"Private key length: {len(self.private_key)}")
+            raise GitHubServiceError(f"Failed to initialize GitHub integration: {e}")
+
+        # Try Redis connection - non-critical
+        try:
+            self.redis = redis.Redis(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                db=0,
+                decode_responses=True,
+                retry_on_timeout=True,
+                socket_keepalive=True,
+                socket_timeout=5
+            )
+            # Test Redis connection
+            await self.redis.ping()
+            print("Redis connection successful")
+        except Exception as e:
+            print(f"Redis connection failed (non-fatal): {e}")
+            self.redis = None
     
     async def __aenter__(self):
         return self
@@ -121,8 +160,7 @@ class GitHubService:
                 full_name=repo.full_name,
                 private=repo.private,
                 description=repo.description,
-                html_url=repo.html_url,
-                default_branch=repo.default_branch
+                html_url=repo.html_url
             ))
         
         return repos
@@ -153,20 +191,24 @@ class GitHubService:
         g = await self._get_github_client(installation_id)
         repo = g.get_repo(repo_full_name)
         
+        # Create GitHub issue with just the supported fields
         gh_issue = repo.create_issue(
             title=issue.title,
             body=issue.body or "",
-            labels=issue.labels or [],
-            assignees=issue.assignees or []
+            labels=issue.labels or []
         )
+        
+        # Convert GitHub issue state to our status enum
+        status = IssueStatus.CLOSED if gh_issue.state.lower() == "closed" else IssueStatus.OPEN
         
         return Issue(
             id=gh_issue.id,
             number=gh_issue.number,
             title=gh_issue.title,
-            body=gh_issue.body,
-            state=gh_issue.state,
-            html_url=gh_issue.html_url,
+            body=gh_issue.body or "",
+            status=status,
+            labels=issue.labels or [],
+            repo_full_name=repo_full_name,
             created_at=gh_issue.created_at,
             updated_at=gh_issue.updated_at
         )
@@ -206,12 +248,15 @@ class GitHubService:
         
         try:
             # Try to get existing file
-            file = repo.get_contents(file_path, ref=branch)
+            contents = repo.get_contents(file_path, ref=branch)
+            # If we get a list, get the first file (happens with directory listings)
+            content_file = contents[0] if isinstance(contents, list) else contents
+            
             result = repo.update_file(
                 path=file_path,
                 message=commit_message,
                 content=content,
-                sha=file.sha,
+                sha=content_file.sha,
                 branch=branch
             )
         except:
@@ -224,8 +269,8 @@ class GitHubService:
             )
         
         return {
-            'commit': result['commit'].sha,
-            'content': result['content'].path
+            'commit': result['commit'].sha if result.get('commit') else None,
+            'content': file_path
         }
     
     async def create_branch(

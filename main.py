@@ -307,26 +307,24 @@ try:
     async def get_user_repos():
         """Get all repositories accessible to the app, with enhanced error handling."""
         try:
-            # Step 1: Attempt to get installations
-            installations = get_app_installations()
+            # Create a GitHub service instance
+            service = GitHubService()
+            await service.initialize()
             
-            # Guard clause for no installations
-            if not installations:
-                logging.info("No installations found for the app.")
-                return []
+            # Use the service to get repos
+            repo_list = await service.get_user_repos()
             
-            repo_list = []
-            for installation in installations:
-                installation_id = installation.get('id')
-                if not installation_id:
-                    logging.warning("Installation object missing 'id' field.")
-                    continue
-                
-                # Step 2: Attempt to get repositories for the installation
-                repos = get_installation_repositories(installation_id)
-                repo_list.extend([repo['full_name'] for repo in repos if 'full_name' in repo])
+            # Return just the repository names
+            return [repo.full_name for repo in repo_list]
             
-            return repo_list
+        except Exception as e:
+            # Log the full error details
+            logger.exception("Error in /user/repos endpoint")
+            # Return a user-friendly error
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch repositories: {str(e)}"
+            )
         
         except Exception as e:
             # CRITICAL: Log the full traceback to Vercel's runtime logs (stderr/stdout)
