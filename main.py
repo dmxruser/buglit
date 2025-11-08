@@ -264,6 +264,45 @@ try:
         """Create an issue (placeholder)."""
         return {"title": issue.title, "body": issue.body}
 
+    def get_app_installations():
+        """Get all installations for the GitHub App."""
+        jwt_token = create_jwt()
+        headers = {
+            'Authorization': f'Bearer {jwt_token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+        
+        url = 'https://api.github.com/app/installations'
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Could not get app installations"
+            )
+        
+        return response.json()
+    
+    def get_installation_repositories(installation_id: int):
+        """Get all repositories for a given installation."""
+        access_token = get_installation_access_token(installation_id)
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
+        
+        url = f'https://api.github.com/installation/repositories'
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Could not get repositories for installation {installation_id}"
+            )
+        
+        return response.json().get('repositories', [])
+    
+    
     @app.get("/user/repos")
     async def get_user_repos():
         """Get all repositories accessible to the app, with enhanced error handling."""
@@ -298,7 +337,6 @@ try:
                 status_code=500, 
                 detail=f"An internal server error occurred while fetching repositories. See logs for details. Error: {str(e)}"
             )
-
     import json
     @app.post("/run-command")
     def run_command(command: Command):
