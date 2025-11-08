@@ -5,5 +5,7 @@ google-genai==0.7.0
 requests-oauthlib==2.0.0
 python-dotenv==1.1.1
 pyjwt[crypto]==2.10.1
-redis==6.4.0
+redis-py[hiredis]==6.4.0
 pydantic-settings==2.10.0
+python-json-logger==2.0.7
+python-json-logger==2.0.7
