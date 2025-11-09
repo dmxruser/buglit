@@ -85,7 +85,7 @@ function App() {
       if (!token) return;
       setLoading(true);
       try {
-        const response = await fetch('/user/repos', {
+        const response = await fetch('/api/v1/user/repos', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -142,7 +142,7 @@ function App() {
     setCategorizedIssues({ Major: [], Minor: [], Bug: [] });
     try {
       console.log(`Fetching issues for repo: ${repoName}`);  // Debug log
-      const response = await fetch(`/issues?repo=${repoName}`, {
+      const response = await fetch(`/api/v1/issues?repo=${repoName}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -177,7 +177,7 @@ function App() {
     setIsThinking(true);
     setPyOutput('');
     try {
-      const response = await fetch('/run-command', {
+      const response = await fetch('/api/v1/run-command', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
