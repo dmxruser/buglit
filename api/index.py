@@ -1,8 +1,6 @@
 import sys
 import logging
 import traceback
-from .app import create_app
-from .v1.api import api_router
 
 # Configure basic logging
 logger = logging.getLogger()
@@ -13,6 +11,9 @@ logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 try:
+    from .app import create_app
+    from .v1.api import api_router
+    
     # Create and configure the app
     app = create_app()
     
@@ -22,10 +23,10 @@ try:
     # Log startup information
     logger.info("BugLit API initialized successfully")
     
+    handler = app
+    
 except Exception as e:
     # Log any startup errors
     logger.error(f"Fatal error during startup: {str(e)}")
     logger.error(traceback.format_exc())
-    sys.exit(1)
-
-handler = app
+    raise e
