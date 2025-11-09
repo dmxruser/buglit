@@ -15,36 +15,12 @@
   ],
   "routes": [
     {
-      "src": "/login/github",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/api/auth/github/callback",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/auth/github/callback",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/user/repos",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/issues",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/run-command",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/api/(.*)",
+      "src": "/api/v1/(.*)",
       "dest": "/api/index.py"
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/index.html"
+      "dest": "/dist/$1"
     }
   ],
   "crons": [

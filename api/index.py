@@ -6,10 +6,10 @@ from .v1.api import api_router
 
 # Configure basic logging
 logger = logging.getLogger()
-handler = logging.StreamHandler()
+stream_handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 logger.setLevel(logging.INFO)
 
 try:
@@ -27,3 +27,5 @@ except Exception as e:
     logger.error(f"Fatal error during startup: {str(e)}")
     logger.error(traceback.format_exc())
     sys.exit(1)
+
+handler = app
