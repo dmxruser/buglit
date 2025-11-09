@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from pathlib import Path
 from typing import Optional
 import os
+import base64
 
 class Settings(BaseSettings):
     # GitHub App settings
@@ -12,7 +13,13 @@ class Settings(BaseSettings):
 
     @property
     def private_key_bytes(self) -> bytes:
-        return self.GITHUB_PRIVATE_KEY.replace('\\n', '\n').encode('utf-8')
+        # Assume GITHUB_PRIVATE_KEY is base64 encoded PEM
+        try:
+            decoded = base64.b64decode(self.GITHUB_PRIVATE_KEY)
+            return decoded
+        except:
+            # Fallback to direct if not base64
+            return self.GITHUB_PRIVATE_KEY.replace('\\n', '\n').replace('\\r', '').replace('\r', '').encode('utf-8')
     
     # Redis settings
     REDIS_HOST: str = "localhost"
