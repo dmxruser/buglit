@@ -33,7 +33,11 @@ def create_app() -> FastAPI:
     )
     
     # Configure Gemini client
-    app.state.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY) # Pass API key explicitly
+    try:
+        app.state.gemini_client = genai.Client(api_key=settings.GEMINI_API_KEY) # Pass API key explicitly
+    except Exception as e:
+        logger.error(f"Failed to initialize Gemini client: {e}")
+        app.state.gemini_client = None
     
     # CORS middleware
     app.add_middleware(
