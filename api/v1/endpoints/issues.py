@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from typing import List
-from services.github_service import GitHubService, GitHubServiceError
+from services.github_service import GitHubService, GitHubServiceError, get_github_service
 from models.schemas import Issue, IssueCreate, IssueUpdate
 
 router = APIRouter(prefix="/issues", tags=["issues"])
@@ -10,7 +10,7 @@ async def create_issue(
     owner: str,
     repo: str,
     issue: IssueCreate,
-    service: GitHubService = Depends()
+    service: GitHubService = Depends(get_github_service)
 ):
     """
     Create a new issue in the specified repository.
@@ -47,7 +47,7 @@ async def update_issue(
     repo: str,
     issue_number: int = Path(..., gt=0),
     issue_update: IssueUpdate = None,
-    service: GitHubService = Depends()
+    service: GitHubService = Depends(get_github_service)
 ):
     """
     Update an existing issue.
@@ -63,7 +63,7 @@ async def close_issue(
     owner: str,
     repo: str,
     issue_number: int = Path(..., gt=0),
-    service: GitHubService = Depends()
+    service: GitHubService = Depends(get_github_service)
 ):
     """
     Close an issue.

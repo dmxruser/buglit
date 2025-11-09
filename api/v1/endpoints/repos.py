@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
-from services.github_service import GitHubService, GitHubServiceError
+from services.github_service import GitHubService, GitHubServiceError, get_github_service
 from models.schemas import Repository
 
 router = APIRouter(prefix="/repos", tags=["repositories"])
 
 @router.get("/", response_model=List[Repository])
-async def list_repositories(service: GitHubService = Depends()):
+async def list_repositories(service: GitHubService = Depends(get_github_service)):
     """
     List all repositories accessible to the authenticated GitHub App.
     """
@@ -22,7 +22,7 @@ async def list_repositories(service: GitHubService = Depends()):
 async def get_repository(
     owner: str,
     repo: str,
-    service: GitHubService = Depends()
+    service: GitHubService = Depends(get_github_service)
 ):
     """
     Get details for a specific repository.
